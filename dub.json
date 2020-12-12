@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"rillk500"
+	],
+	"copyright": "Copyright © 2020, rillk500",
+	"description": "A command line ZIP utility",
+	"license": "MIT",
+	"name": "zippo"
+}
