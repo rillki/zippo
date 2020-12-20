@@ -1,19 +1,33 @@
 module zippo;
 
-void compress(const(string) zipName = "ZIP_FILE", const(string) path = "", const(string[]) files = null) {
+enum Defaults {
+    ZIPNAME = "ZIP_FILE",
+    PATH = ""
+}
+
+/+ compresses given files in a specified directory into a single zip file,
+if the directory is not specified, uses the current working directory
+    in:
+        string zipName = "ZIP_FILE"
+        string path = ""
+        string[] files
++/
+void compress(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH, const(string[]) files = null) {
     import std.zip;
     import std.file: write;
 
-    ArchiveMember member = new ArchiveMember();
-    member.name = path;
-    member.expandedData(cast(ubyte[])(readFileData(path)));
-    member.compressionMethod = CompressionMethod.deflate;
+    ZipArchive zip = new ZipArchive();
+    foreach(file; files) {
+        ArchiveMember member = new ArchiveMember();
+        member.name = file;
+        member.expandedData(cast(ubyte[])(readFileData(file)));
+        member.compressionMethod = CompressionMethod.deflate;
 
-	ZipArchive zip = new ZipArchive();
-	zip.addMember(member);
+        zip.addMember(member);
+    }
 
-	void[] compressed_data = zip.build();
-	write((zipName ~ ".zip"), compressed_data);
+    void[] compressed_data = zip.build();
+    write((zipName ~ ".zip"), compressed_data);
 }
 
 /+ compresses all files in a specified directory into a single zip file,
@@ -22,7 +36,7 @@ if the directory is not specified, uses the current working directory
         string zipName = "ZIP_FILE"
         string path = ""
 +/
-void compressAll(const(string) zipName = "ZIP_FILE", const(string) path = "") {
+void compressAll(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH) {
     import std.zip;
     import std.file: write, getcwd;
 
@@ -48,11 +62,31 @@ void compressAll(const(string) zipName = "ZIP_FILE", const(string) path = "") {
     write((zipName ~ ".zip"), compressed_data);
 }
 
-string[string] splitArg(const(string) arg) {
-    import std.algorithm: findSplit;
+/+ splits a string into multiple strings given a seperator
+    in:
+        string str = ""
+        string path = ""
+    out:
+        string[]
++/
+string[] multipleSplit(const(string) str = "", const(string) sep = "") {
+    import std.algorithm: findSplit, canFind;
 
-    auto s = findSplit(arg, "=");
-    return [s[0]: s[2]];
+    if(str == "" || sep == "") {
+        return null;
+    }
+
+    static string[] s;
+    if(str.canFind(sep)) {
+        auto temp = findSplit(str, sep);
+        s ~= temp[0];
+
+        multipleSplit(temp[2], sep);
+    } else {
+        s ~= str;
+    }
+
+    return s;
 }
 
 /************************** PRIVATE **************************/
@@ -62,7 +96,7 @@ private {
         in:
             string zipName = "ZIP_FILE"
     +/
-    void compressAllCWD(const(string) zipName = "ZIP_FILE") {
+    void compressAllCWD(const(string) zipName = Defaults.ZIPNAME) {
         import std.zip;
         import std.file: write, getcwd;
 
