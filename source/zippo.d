@@ -2,7 +2,25 @@ module zippo;
 
 enum Defaults {
     ZIPNAME = "ZIP_FILE",
-    PATH = ""
+    PATH = "",
+    MODE = "zip"
+}
+
+void uncompress(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH) {
+    import std.zip;
+    import std.file: read, write;
+
+    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    //immutable(string) fzipName = (zipName[$-3] != ".") ? () : ();
+
+    // read a zip file into memory
+    ZipArchive zip = new ZipArchive(read(fpath ~ zipName));
+
+    // iterate over all zip members
+    foreach (name, am; zip.directory) {
+        // decompress the archive member
+        write(name, cast(void[])(zip.expand(am)));
+    }
 }
 
 /+ compresses given files in a specified directory into a single zip file,
