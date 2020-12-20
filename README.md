@@ -25,7 +25,7 @@ To use the default configuration:
 ./zippo all
 ```
 
-To check a detailed instruction:
+To check out the full list of available commands:
 ```D
 ./zippo -h
 ```
