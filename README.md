@@ -5,7 +5,7 @@ Zip and unzip files in just a few seconds using your terminal or the command lin
 
 ## Usage:
 
-The full command looks like:
+The full command looks like this:
 ```D
 ./zippo name="ZIP_FILE" path="/Desktop/media/files" file="file1|file2|...|fileX"
 ```
