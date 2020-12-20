@@ -1,5 +1,5 @@
 # zippo
-## Command line ZIP utility
+### Command line ZIP utility
 
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
