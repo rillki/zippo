@@ -10,7 +10,7 @@ void uncompress(const(string) zipName = Defaults.ZIPNAME, const(string) path = D
     import std.zip;
     import std.file: read, write;
 
-    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    immutable(string) fpath = (path != "" || path[$-1] != '/') ? (path ~ "/") : (path);
     //immutable(string) fzipName = (zipName[$-3] != ".") ? () : ();
 
     // read a zip file into memory
@@ -32,13 +32,15 @@ if the directory is not specified, uses the current working directory
 +/
 void compress(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH, const(string[]) files = null) {
     import std.zip;
-    import std.file: write;
+    import std.file: write, getcwd;
+
+    immutable(string) fpath = (path[$-1] != '/') ? (path ~ "/") : (path);
 
     ZipArchive zip = new ZipArchive();
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(file)));
+        member.expandedData(cast(ubyte[])(readFileData(fpath ~ file)));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
