@@ -1,178 +1,147 @@
 module zippo;
 
-enum Defaults {
-    ZIPNAME = "ZIP_FILE",
-    PATH = "",
-    MODE = "zip"
-}
+import ziputil;
 
-void uncompress(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH) {
-    import std.zip;
-    import std.file: read, write;
+//import std.file: write;
+import std.stdio: writeln;
 
-    immutable(string) fpath = (path != "" || path[$-1] != '/') ? (path ~ "/") : (path);
-    //immutable(string) fzipName = (zipName[$-3] != ".") ? () : ();
-
-    // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(fpath ~ zipName));
-
-    // iterate over all zip members
-    foreach (name, am; zip.directory) {
-        // decompress the archive member
-        write(name, cast(void[])(zip.expand(am)));
-    }
-}
-
-/+ compresses given files in a specified directory into a single zip file,
-if the directory is not specified, uses the current working directory
-    in:
-        string zipName = "ZIP_FILE"
-        string path = ""
-        string[] files
+/++ a list of all available commands
 +/
-void compress(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH, const(string[]) files = null) {
-    import std.zip;
-    import std.file: write, getcwd;
-
-    immutable(string) fpath = (path[$-1] != '/') ? (path ~ "/") : (path);
-
-    ZipArchive zip = new ZipArchive();
-    foreach(file; files) {
-        ArchiveMember member = new ArchiveMember();
-        member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(fpath ~ file)));
-        member.compressionMethod = CompressionMethod.deflate;
-
-        zip.addMember(member);
-    }
-
-    void[] compressed_data = zip.build();
-    write((zipName ~ ".zip"), compressed_data);
+enum Commands {
+    Name = "name",
+    Path = "path",
+    File = "file",
+    Zip = "zip",
+    All = "all"
 }
 
-/+ compresses all files in a specified directory into a single zip file,
-if the directory is not specified, uses the current working directory
-    in:
-        string zipName = "ZIP_FILE"
-        string path = ""
+/++ handles the utility's logic
 +/
-void compressAll(const(string) zipName = Defaults.ZIPNAME, const(string) path = Defaults.PATH) {
-    import std.zip;
-    import std.file: write, getcwd;
+void zippoUtility(const(string[]) args) {
+    immutable string help = "\n/******* Zippo: a command line ZIP utility *******/\n\n" ~
+                            "1) name=\"zipName\"\t\tZIP file name\n\t\t\t\t[default: ZIP_FILE is used]\n\n" ~
+                            "2) path=\"path\"\t\t\tspecify the directory\n\t\t\t\t[default: cwd is used]\n\n" ~
+                            "3) file=\"filename\"\t\tspecify a single file to convert to a ZIP\n\t\t\t\t[default: compresses all files in a directory]\n\n" ~
+                            "4) file=\"file1|file2\"\t\tuse the \"|\" bar to add multiple files\n\n" ~
+                            "5) zip=y/n\t\t\ty - zip, n - unzip\n\t\t\t\t[default: y]\n\n" ~
+                            "6) all\t\t\t\tuse the defaults\n";
 
-    if(path == "") {
-        compressAllCWD(zipName);
+    // display help manual
+    if(args.length < 2 || args[1] == "-h") {
+        writeln(help);
         return;
     }
 
-    immutable(string[]) files = cast(immutable(string[]))(listdir(path));
-    immutable(string) fpath = (path[$-1] != '/') ? (path ~ "/") : (path);
+    // get command line arguments
+    string[string] info = getCommandLineArguments(args);
 
-    ZipArchive zip = new ZipArchive();
-    foreach(file; files) {
-        ArchiveMember member = new ArchiveMember();
-        member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(fpath ~ file)));
-        member.compressionMethod = CompressionMethod.deflate;
+    // configure command line arguments (what is not specified will be set to the default value)
+    info.configureCommanLineArguments();
 
-        zip.addMember(member);
+    // notify the user that the process has begun
+    writeln("---------- OPERATION STARTED! ----------");
+
+    // should we zip or unzip a file
+    if(info[Commands.Zip] == "y") {
+        compressUtility(info);
+    } else {
+        decompressUtility(info);
     }
 
-    void[] compressed_data = zip.build();
-    write((zipName ~ ".zip"), compressed_data);
+    // notify when the user when finished
+    writeln("-------- OPERATION SUCCESSFULL! --------");
 }
 
-/+ splits a string into multiple strings given a seperator
+/++ splits command line arguments into string[string] using "=" seperator
     in:
-        string str = ""
-        string path = ""
+        const(string[string]) args
     out:
-        string[]
+        string[string]
 +/
-string[] multipleSplit(const(string) str = "", const(string) sep = "") {
+string[string] getCommandLineArguments(const(string[]) args) {
+    import std.algorithm: findSplit;
+
+    string[string] info;
+    for(size_t i = 1; i < args.length; i++) {
+        auto s = findSplit(args[i], "=");
+        info[s[0]] = s[2];
+    }
+
+    return info;
+}
+
+/++ configures command line arguments to the default values if the value is not specified by the user
+    in:
+        string[string] info
++/
+void configureCommanLineArguments(string[string] info) {
     import std.algorithm: findSplit, canFind;
 
-    if(str == "" || sep == "") {
-        return null;
+    if((Commands.Zip in info) is null) {
+        info[Commands.Zip] = Defaults.Zip;
     }
 
-    static string[] s;
-    if(str.canFind(sep)) {
-        auto temp = findSplit(str, sep);
-        s ~= temp[0];
+    if((Commands.Name in info) is null) {
+        info[Commands.Name] = Defaults.Name;
+    }
 
-        multipleSplit(temp[2], sep);
+    if((Commands.Path in info) is null) {
+        info[Commands.Path] = Defaults.Path;
+    }
+}
+
+/++ compresses the data into a zip file
+    in:
+        const(string[string]) info
++/
+void compressUtility(const(string[string]) info) {
+    // if the defaults are chosen, compress all files in the current directory and save to ZIP_FILE.zip
+    if(("all" in info) !is null) {
+        compressAll;
     } else {
-        s ~= str;
+        // if files are not specified, then compress all files in a directory
+        if(("file" in info) is null) {
+            compressAll(info["name"], info["path"]);
+        } else {
+            compress(info["name"], info["path"], info["file"].multipleSplit("|"));
+        }
     }
-
-    return s;
 }
 
-/************************** PRIVATE **************************/
+/++ decompresses zipped data
+    in:
+        const(string[string]) info
++/
+void decompressUtility(const(string[string]) info) {
+    // UNFINISHED.... REDO....
+    // ADD: decompress multiple zip files
+    // ADD: compress all, but exclude some files (?)
+    /*if(("zip" in info) !is null) {
+        if(info["zip"] == "n") {
+            // if ZIP file name is not specified, assign the defaults
+            if(("name" in info) is null) {
+                info["name"] = Defaults.ZIPNAME ~ ".zip";
+            }
 
-private {
-    /+ compresses all files in the current working directory into a single zip file
-        in:
-            string zipName = "ZIP_FILE"
-    +/
-    void compressAllCWD(const(string) zipName = Defaults.ZIPNAME) {
-        import std.zip;
-        import std.file: write, getcwd;
+            // if path is not specified, assign the defaults
+            if(("path" in info) is null) {
+                info["path"] = Defaults.PATH;
+            }
 
-        immutable(string[]) files = cast(immutable(string[]))(listdir(getcwd()));
-        
-        ZipArchive zip = new ZipArchive();
-        foreach(file; files) {
-            ArchiveMember member = new ArchiveMember();
-            member.name = file;
-            member.expandedData(cast(ubyte[])(readFileData(file)));
-            member.compressionMethod = CompressionMethod.deflate;
-
-            zip.addMember(member);
+            writeln("unzipping....");
+            decompress(info["name"], info["path"]);
+            return;
         }
-
-        void[] compressed_data = zip.build();
-        write((zipName ~ ".zip"), compressed_data);
-    }
-
-    /+ reads from a file and return the data as void
-        in:
-            string path
-        out:
-            void[]
-    +/
-    void[] readFileData(const(string) path) {
-        import std.stdio: File;
-        import std.conv: to;
-
-        void[] data;
-        File file = File(path, "r"); 
-        scope(exit) { file.close(); }
-
-        while(!file.eof) {
-            data ~= cast(void[])(file.readln);
-        }
-
-        return data;
-    }
-
-    /+ lists all files in a directory
-        in:
-            string path
-        out:
-            string[]
-    +/
-    string[] listdir(const(string) path) {
-        import std.algorithm;
-        import std.array;
-        import std.file;
-        import std.path;
-
-        return std.file.dirEntries(path, SpanMode.shallow)
-            .filter!(a => a.isFile)
-            .map!(a => std.path.baseName(a.name))
-            .array;
-    }
-
+    }*/
 }
+
+
+
+
+
+
+
+
+
+
+
