@@ -3,29 +3,41 @@
 
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
+## Building the Zippo Utility:
+Make sure you have a `dmd` compiler and `make` installed on your system. Then `git clone` the zippo repository and `cd` to `/zippo/source/`. 
+Finally, type: 
+```
+make
+```
+
+Or you can type out the entire command:
+```D
+dmd -of=zippo main.d zippo.d ziputil.d
+```
+
+Replace `dmd` with the D compiler you have installed on your system.
+
 ## Usage:
 
 The full command looks like this:
 ```D
-./zippo name="ZIP_FILE" path="/Desktop/media/files" file="file1|file2|...|fileX"
+./zippo zip=y name="ZIP_FILE" path="/Desktop/media/files" file="file1|file2|...|fileX" exclude=none
 ```
 
-The shortest command using the defaults:
+The shortest command using the default configuration:
 ```D
 ./zippo all
 ```
 
-A few things to keep in mind [DEFAULT CONFIGURATION]:
-1. If `name` is not specified, then `ZIP_FILE` is used by default
-2. If `path` is not specified, then the current working directory is used by default
-3. If no `file` is specified, then it will compress all files in the directory
-
-To use the default configuration: 
-```D
-./zippo all
-```
+When a value for the command is not specified, the default value is used. For example, if `path` is not provided, then the current working directory is used.
 
 To check out the full list of available commands:
 ```D
 ./zippo -h
 ```
+
+### The Zippo Wiki page
+Read more on the [wiki]() page.
+
+
+
