@@ -116,23 +116,7 @@ void decompressUtility(const(string[string]) info) {
     // UNFINISHED.... REDO....
     // ADD: decompress multiple zip files
     // ADD: compress all, but exclude some files (?)
-    /*if(("zip" in info) !is null) {
-        if(info["zip"] == "n") {
-            // if ZIP file name is not specified, assign the defaults
-            if(("name" in info) is null) {
-                info["name"] = Defaults.ZIPNAME ~ ".zip";
-            }
-
-            // if path is not specified, assign the defaults
-            if(("path" in info) is null) {
-                info["path"] = Defaults.PATH;
-            }
-
-            writeln("unzipping....");
-            decompress(info["name"], info["path"]);
-            return;
-        }
-    }*/
+    decompress(info["name"], info["path"]);
 }
 
 
