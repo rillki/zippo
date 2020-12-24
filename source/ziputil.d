@@ -11,18 +11,18 @@ enum Defaults {
 
 /++ unzips the zip file (or the specified files only contained in a zip)
     in:
-        const(string) zipName = Defaults.Name
-        const(string) path = Defaults.Path
+        string zipName = Defaults.Name
+        string path = Defaults.Path
 +/
-void decompress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path, string[] files = null) {
+void decompress(string zipName = Defaults.Name, string path = Defaults.Path, string[] files = null) {
     import std.file: read, write;
     import std.algorithm: canFind;
 
-    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
-    immutable(string) fzipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
+    path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    zipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
 
     // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(fpath ~ fzipName));
+    ZipArchive zip = new ZipArchive(read(path ~ zipName));
     if(files is null) { // if true, unzip all files
         // iterate over all zip members
         foreach(name, data; zip.directory) {
@@ -38,19 +38,19 @@ void decompress(const(string) zipName = Defaults.Name, const(string) path = Defa
 
 /++ lists zip file contents
     in:
-        const(string) zipName = Defaults.Name
-        const(string) path = Defaults.Path
+        string zipName = Defaults.Name
+        string path = Defaults.Path
 +/
-void listZipContents(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
+void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path) {
     import std.stdio: writefln;
     import std.file: read;
     import std.algorithm: canFind;
 
-    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
-    immutable(string) fzipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
+    path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    zipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
 
     // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(fpath ~ fzipName));
+    ZipArchive zip = new ZipArchive(read(path ~ zipName));
 
     // iterate over all zip members
     writefln("%10s\t%s", "Size", "Name");
@@ -65,27 +65,26 @@ if the directory is not specified, uses the current working directory
     in:
         string zipName = Defaults.Name
         string path = Defaults.Path
-        string[] files = null
+        const(string[]) files = null
 +/
-void compress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path, const(string[]) files = null) in {
+void compress(string zipName = Defaults.Name, string path = Defaults.Path, const(string[]) files = null) in {
     assert((files !is null), "Error: specify which files to compress!");
 } do {
     import std.file: write;
 
-    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
 
     ZipArchive zip = new ZipArchive();
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(fpath ~ file)));
+        member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
     }
 
-    void[] compressed_data = zip.build();
-    write((zipName ~ ".zip"), compressed_data);
+    write((zipName ~ ".zip"), zip.build());
 }
 
 /++ compresses all files in a specified directory into a single zip file,
@@ -94,29 +93,23 @@ if the directory is not specified, uses the current working directory
         string zipName = Defaults.Name
         string path = Defaults.Path
 +/
-void compressAll(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
+void compressAll(string zipName = Defaults.Name, string path = Defaults.Path) {
     import std.file: write, getcwd;
 
-    if(path == "") {
-        compressAllCWD(zipName);
-        return;
-    }
-
-    immutable(string[]) files = cast(immutable(string[]))(listdir(path));
-    immutable(string) fpath = (path[$-1] != '/') ? (path ~ "/") : (path);
+    immutable(string[]) files = cast(immutable(string[]))(listdir((path == "") ? (getcwd) : (path)));
+    path = (path[$-1] != '/') ? (path ~ "/") : (path);
 
     ZipArchive zip = new ZipArchive();
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(fpath ~ file)));
+        member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
     }
 
-    void[] compressed_data = zip.build();
-    write((zipName ~ ".zip"), compressed_data);
+    write((zipName ~ ".zip"), zip.build());
 }
 
 /++ splits a string into multiple strings given a seperator
@@ -145,30 +138,27 @@ string[] multipleSplit(const(string) str = "", const(string) sep = "") in {
     return s;
 }
 
-/++ compresses all files in the current working directory into a single zip file
-    in:
-        const(string) zipName = Defaults.Name
-+/
-void compressAllCWD(const(string) zipName = Defaults.Name) {
-    import std.file: write, getcwd;
+///++ compresses all files in the current working directory into a single zip file
+//    in:
+//        const(string) zipName = Defaults.Name
+//+/
+//void compressAllCWD(const(string) zipName = Defaults.Name) {
+//    import std.file: write, getcwd;
 
-    immutable(string[]) files = cast(immutable(string[]))(listdir(getcwd()));
+//    immutable(string[]) files = cast(immutable(string[]))(listdir(getcwd()));
     
-    ZipArchive zip = new ZipArchive();
-    foreach(file; files) {
-        ArchiveMember member = new ArchiveMember();
-        member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(file)));
-        member.compressionMethod = CompressionMethod.deflate;
+//    ZipArchive zip = new ZipArchive();
+//    foreach(file; files) {
+//        ArchiveMember member = new ArchiveMember();
+//        member.name = file;
+//        member.expandedData(cast(ubyte[])(readFileData(file)));
+//        member.compressionMethod = CompressionMethod.deflate;
 
-        zip.addMember(member);
-    }
+//        zip.addMember(member);
+//    }
 
-    /* OLD:
-    void[] compressed_data = zip.build();
-    write((zipName ~ ".zip"), compressed_data);*/
-    write((zipName ~ ".zip"), zip.build());
-}
+//    write((zipName ~ ".zip"), zip.build());
+//}
 
 /++ reads from a file and return the data as void
     in:
