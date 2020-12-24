@@ -36,8 +36,8 @@ To check out the full list of available commands:
 ./zippo -h
 ```
 
-### The Zippo Wiki page
-Read more on the [wiki]() page.
+## The Zippo Wiki page
+Read more on the [wiki](https://github.com/rillk500/zippo/wiki) page.
 
 
 
