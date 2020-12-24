@@ -4,10 +4,6 @@ import ziputil;
 
 import std.stdio: writeln;
 
-    // UNFINISHED.... REDO....
-    // ADD: decompress multiple zip files
-    // ADD: compress all, but exclude some files (?)
-
 /++ a list of all available commands
 +/
 enum Commands {
@@ -15,10 +11,11 @@ enum Commands {
     Path = "path",
     File = "file",
     Zip = "zip",
+    Ignore = "ignore",
     All = "all"
 }
 
-/++ handles the utility's logic
+/++ handles the zip utility's logic
 +/
 void zippoUtility(const(string[]) args) {
     immutable string help = "\n/******* Zippo: a command line ZIP utility *******/\n\n" ~
@@ -27,7 +24,9 @@ void zippoUtility(const(string[]) args) {
                             "3) file=\"filename\"\t\tspecify a single file to convert to a ZIP\n\t\t\t\t[default: compresses all files in a directory]\n\n" ~
                             "4) file=\"file1|file2\"\t\tuse the \"|\" bar to add multiple files\n\n" ~
                             "5) zip=y/n/ls\t\t\ty - zip, n - unzip, ls - list zip contents\n\t\t\t\t[default: y]\n\n" ~
-                            "6) all\t\t\t\tuse the defaults\n";
+                            "6) ignore=\"filename\"\t\tfiles to exclude from compression\n\t\t\t\t[default: none]\n\n" ~
+                            "7) ignore=\"file1|file2\"\t\tuse the \"|\" bar to exclude multiple files\n\n" ~
+                            "8) all\t\t\t\tuse the defaults\n";
 
     // display help manual
     if(args.length < 2 || args[1] == "-h") {
@@ -44,13 +43,13 @@ void zippoUtility(const(string[]) args) {
     // notify the user that the process has begun
     writeln("---------- PROCESS STARTED! ----------");
 
-    // should we zip or unzip a file
+    // check if we should zip, unzip or list zip contents
     if(info[Commands.Zip] == "y") {
         compressUtility(info);
     } else if(info[Commands.Zip] == "n") {
         decompressUtility(info);
     } else {
-        listZipContents(info["name"], info["path"]);
+        listZipContents(info[Commands.Name], info[Commands.Path]);
     }
 
     // notify when the user when finished
@@ -93,6 +92,10 @@ void configureCommanLineArguments(string[string] info) {
     if((Commands.Path in info) is null) {
         info[Commands.Path] = Defaults.Path;
     }
+
+    if((Commands.Ignore in info) is null) {
+        info[Commands.Ignore] = Defaults.Ignore;
+    }
 }
 
 /++ compresses the data into a zip file
@@ -101,14 +104,18 @@ void configureCommanLineArguments(string[string] info) {
 +/
 void compressUtility(const(string[string]) info) {
     // if the defaults are chosen, compress all files in the current directory and save to ZIP_FILE.zip
-    if(("all" in info) !is null) {
+    if((Commands.All in info) !is null) {
         compressAll;
     } else {
-        // if files are not specified, then compress all files in a directory
-        if(("file" in info) is null) {
-            compressAll(info["name"], info["path"]);
+        // if files are not specified, then compress all files in a directory excluding the specified files, if provided
+        if((Commands.File in info) is null) {
+            if(info[Commands.Ignore] != Defaults.Ignore) {
+                ignoreAndCompress(info[Commands.Name], info[Commands.Path], info[Commands.Ignore].multipleSplit("|"));
+            } else {
+                compressAll(info[Commands.Name], info[Commands.Path]);
+            }
         } else {
-            compress(info["name"], info["path"], info["file"].multipleSplit("|"));
+            compress(info[Commands.Name], info[Commands.Path], info[Commands.File].multipleSplit("|"));
         }
     }
 }
@@ -118,7 +125,7 @@ void compressUtility(const(string[string]) info) {
         const(string[string]) info
 +/
 void decompressUtility(const(string[string]) info) {
-    decompress(info["name"], info["path"], (("file" in info) ? (info["file"].multipleSplit("|")) : (null)));
+    decompress(info[Commands.Name], info[Commands.Path], ((Commands.File in info) ? (info[Commands.File].multipleSplit("|")) : (null)));
 }
 
 

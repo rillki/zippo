@@ -2,8 +2,7 @@ module main;
 
 import zippo;
 
-//import std.stdio, std.algorithm;
-
+// main function
 void main(string[] args) {
-	zippoUtility(args);
+	zippoUtility(args); // calls the zippo utility
 }
