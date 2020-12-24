@@ -23,7 +23,7 @@ void zippoUtility(const(string[]) args) {
                             "2) path=\"path\"\t\t\tspecify the directory\n\t\t\t\t[default: cwd is used]\n\n" ~
                             "3) file=\"filename\"\t\tspecify a single file to convert to a ZIP\n\t\t\t\t[default: compresses all files in a directory]\n\n" ~
                             "4) file=\"file1|file2\"\t\tuse the \"|\" bar to add multiple files\n\n" ~
-                            "5) zip=y/n\t\t\ty - zip, n - unzip\n\t\t\t\t[default: y]\n\n" ~
+                            "5) zip=y/n/ls\t\t\ty - zip, n - unzip, ls - list zip contents\n\t\t\t\t[default: y]\n\n" ~
                             "6) all\t\t\t\tuse the defaults\n";
 
     // display help manual
@@ -44,8 +44,10 @@ void zippoUtility(const(string[]) args) {
     // should we zip or unzip a file
     if(info[Commands.Zip] == "y") {
         compressUtility(info);
-    } else {
+    } else if(info[Commands.Zip] == "n") {
         decompressUtility(info);
+    } else {
+        listZipContents(info["name"], info["path"]);
     }
 
     // notify when the user when finished

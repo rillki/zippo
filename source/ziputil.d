@@ -1,5 +1,8 @@
 module ziputil;
 
+// std.zip functionality that is used
+import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
+
 enum Defaults {
     Name = "ZIP_FILE",
     Path = "",
@@ -12,7 +15,6 @@ enum Defaults {
         const(string) path = Defaults.Path
 +/
 void decompress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
-    import std.zip;
     import std.file: read, write;
     import std.algorithm: canFind;
 
@@ -29,6 +31,30 @@ void decompress(const(string) zipName = Defaults.Name, const(string) path = Defa
     }
 }
 
+/++ lists zip file contents
+    in:
+        const(string) zipName = Defaults.Name
+        const(string) path = Defaults.Path
++/
+void listZipContents(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
+    import std.stdio: writefln;
+    import std.file: read;
+    import std.algorithm: canFind;
+
+    immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
+    immutable(string) fzipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
+
+    // read a zip file into memory
+    ZipArchive zip = new ZipArchive(read(fpath ~ fzipName));
+
+    // iterate over all zip members
+    writefln("%10s\t%s", "Size", "Name");
+    foreach(name, data; zip.directory) {
+        // print some data about each member
+        writefln("%10s\t%s", data.expandedSize, name);
+    }
+}
+
 /++ compresses given files in a specified directory into a single zip file,
 if the directory is not specified, uses the current working directory
     in:
@@ -39,7 +65,6 @@ if the directory is not specified, uses the current working directory
 void compress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path, const(string[]) files = null) in {
     assert((files !is null), "Error: specify which files to compress!");
 } do {
-    import std.zip;
     import std.file: write;
 
     immutable(string) fpath = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
@@ -65,7 +90,6 @@ if the directory is not specified, uses the current working directory
         string path = Defaults.Path
 +/
 void compressAll(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
-    import std.zip;
     import std.file: write, getcwd;
 
     if(path == "") {
@@ -121,7 +145,6 @@ string[] multipleSplit(const(string) str = "", const(string) sep = "") in {
         const(string) zipName = Defaults.Name
 +/
 void compressAllCWD(const(string) zipName = Defaults.Name) {
-    import std.zip;
     import std.file: write, getcwd;
 
     immutable(string[]) files = cast(immutable(string[]))(listdir(getcwd()));
