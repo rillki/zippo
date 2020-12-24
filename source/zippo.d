@@ -42,7 +42,7 @@ void zippoUtility(const(string[]) args) {
     info.configureCommanLineArguments();
 
     // notify the user that the process has begun
-    writeln("---------- OPERATION STARTED! ----------");
+    writeln("---------- PROCESS STARTED! ----------");
 
     // should we zip or unzip a file
     if(info[Commands.Zip] == "y") {
@@ -54,7 +54,7 @@ void zippoUtility(const(string[]) args) {
     }
 
     // notify when the user when finished
-    writeln("-------- OPERATION SUCCESSFULL! --------");
+    writeln("---------- PROCESS FINISHED! ----------");
 }
 
 /++ splits command line arguments into string[string] using "=" seperator

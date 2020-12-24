@@ -15,6 +15,7 @@ enum Defaults {
         string path = Defaults.Path
 +/
 void decompress(string zipName = Defaults.Name, string path = Defaults.Path, string[] files = null) {
+    import std.stdio: writefln;
     import std.file: read, write;
     import std.algorithm: canFind;
 
@@ -25,12 +26,17 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
     ZipArchive zip = new ZipArchive(read(path ~ zipName));
     if(files is null) { // if true, unzip all files
         // iterate over all zip members
-        foreach(name, data; zip.directory) {
+        foreach(file, data; zip.directory) {
             // decompress the archive member
-            write(name, cast(void[])(zip.expand(data)));
+            write(file, cast(void[])(zip.expand(data)));
         }
     } else { // else unzip only the selected files
         foreach(file; files) {
+            if((file in zip.directory) is null) {
+                writefln("Error: %s does not exist!", file);
+                continue;
+            }
+            
             write(file, cast(void[])(zip.expand(zip.directory[file])));
         }
     }
@@ -54,9 +60,9 @@ void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path
 
     // iterate over all zip members
     writefln("%10s\t%s", "Size", "Name");
-    foreach(name, data; zip.directory) {
+    foreach(file, data; zip.directory) {
         // print some data about each member
-        writefln("%10s\t%s", data.expandedSize, name);
+        writefln("%10s\t%s", data.expandedSize, file);
     }
 }
 
@@ -70,12 +76,20 @@ if the directory is not specified, uses the current working directory
 void compress(string zipName = Defaults.Name, string path = Defaults.Path, const(string[]) files = null) in {
     assert((files !is null), "Error: specify which files to compress!");
 } do {
-    import std.file: write;
+    import std.stdio: writefln;
+    import std.file: write, exists;
 
     path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
 
-    ZipArchive zip = new ZipArchive();
+    ZipArchive zip = new ZipArchive(); 
+    zip.isZip64(true);
+
     foreach(file; files) {
+        if(!exists(path ~ file)) {
+            writefln("Error: %s does not exist!", file);
+            continue;
+        }
+
         ArchiveMember member = new ArchiveMember();
         member.name = file;
         member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
@@ -84,7 +98,9 @@ void compress(string zipName = Defaults.Name, string path = Defaults.Path, const
         zip.addMember(member);
     }
 
-    write((zipName ~ ".zip"), zip.build());
+    if(zip.totalEntries > 0) {
+        write((zipName ~ ".zip"), zip.build());
+    }
 }
 
 /++ compresses all files in a specified directory into a single zip file,
@@ -99,7 +115,9 @@ void compressAll(string zipName = Defaults.Name, string path = Defaults.Path) {
     immutable(string[]) files = cast(immutable(string[]))(listdir((path == "") ? (getcwd) : (path)));
     path = (path[$-1] != '/') ? (path ~ "/") : (path);
 
-    ZipArchive zip = new ZipArchive();
+    ZipArchive zip = new ZipArchive(); 
+    zip.isZip64(true);
+
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
