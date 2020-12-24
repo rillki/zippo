@@ -5,6 +5,10 @@ import ziputil;
 //import std.file: write;
 import std.stdio: writeln;
 
+    // UNFINISHED.... REDO....
+    // ADD: decompress multiple zip files
+    // ADD: compress all, but exclude some files (?)
+
 /++ a list of all available commands
 +/
 enum Commands {
@@ -115,10 +119,7 @@ void compressUtility(const(string[string]) info) {
         const(string[string]) info
 +/
 void decompressUtility(const(string[string]) info) {
-    // UNFINISHED.... REDO....
-    // ADD: decompress multiple zip files
-    // ADD: compress all, but exclude some files (?)
-    decompress(info["name"], info["path"]);
+    decompress(info["name"], info["path"], (("file" in info) ? (info["file"].multipleSplit("|")) : (null)));
 }
 
 

@@ -9,12 +9,12 @@ enum Defaults {
     Zip = "y",
 }
 
-/++ unzips the zip file
+/++ unzips the zip file (or the specified files only contained in a zip)
     in:
         const(string) zipName = Defaults.Name
         const(string) path = Defaults.Path
 +/
-void decompress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path) {
+void decompress(const(string) zipName = Defaults.Name, const(string) path = Defaults.Path, string[] files = null) {
     import std.file: read, write;
     import std.algorithm: canFind;
 
@@ -23,11 +23,16 @@ void decompress(const(string) zipName = Defaults.Name, const(string) path = Defa
 
     // read a zip file into memory
     ZipArchive zip = new ZipArchive(read(fpath ~ fzipName));
-
-    // iterate over all zip members
-    foreach (name, am; zip.directory) {
-        // decompress the archive member
-        write(name, cast(void[])(zip.expand(am)));
+    if(files is null) { // if true, unzip all files
+        // iterate over all zip members
+        foreach(name, data; zip.directory) {
+            // decompress the archive member
+            write(name, cast(void[])(zip.expand(data)));
+        }
+    } else { // else unzip only the selected files
+        foreach(file; files) {
+            write(file, cast(void[])(zip.expand(zip.directory[file])));
+        }
     }
 }
 
