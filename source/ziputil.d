@@ -31,7 +31,7 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
         // iterate over all zip members
         foreach(file, data; zip.directory) {
             // decompress all archive members
-            write(file, cast(void[])(zip.expand(data)));
+            write(file, zip.expand(data));
         }
     } else { // else unzip only the selected files
         foreach(file; files) {
@@ -41,7 +41,7 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
             }
             
             // decompress the selected files
-            write(file, cast(void[])(zip.expand(zip.directory[file])));
+            write(file, zip.expand(zip.directory[file]));
         }
     }
 }
@@ -96,7 +96,7 @@ void compress(string zipName = Defaults.Name, string path = Defaults.Path, const
 
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
+        member.expandedData(readFileData(path ~ file));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
@@ -116,7 +116,7 @@ if the directory is not specified, uses the current working directory
 void compressAll(string zipName = Defaults.Name, string path = Defaults.Path) {
     import std.file: write, getcwd;
 
-    immutable(string[]) files = cast(immutable(string[]))(listdir((path == "") ? (getcwd) : (path)));
+    string[] files = (listdir((path == "") ? (getcwd) : (path)));
     path = (path[$-1] != '/') ? (path ~ "/") : (path);
 
     ZipArchive zip = new ZipArchive(); 
@@ -125,7 +125,7 @@ void compressAll(string zipName = Defaults.Name, string path = Defaults.Path) {
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
+        member.expandedData(readFileData(path ~ file));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
@@ -163,7 +163,7 @@ void ignoreAndCompress(string zipName = Defaults.Name, string path = Defaults.Pa
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(path ~ file)));
+        member.expandedData(readFileData(path ~ file));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
@@ -211,7 +211,7 @@ void compressAllCWD(const(string) zipName = Defaults.Name) {
     foreach(file; files) {
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(cast(ubyte[])(readFileData(file)));
+        member.expandedData(readFileData(file));
         member.compressionMethod = CompressionMethod.deflate;
 
         zip.addMember(member);
@@ -220,22 +220,22 @@ void compressAllCWD(const(string) zipName = Defaults.Name) {
     write((zipName ~ ".zip"), zip.build());
 }
 
-/++ reads from a file and returns the data as void[]
+/++ reads from a file and returns the data as ubyte[]
     in:
         const(string) filename
     out:
-        void[]
+        ubyte[]
 +/
-void[] readFileData(const(string) filename) {
+ubyte[] readFileData(const(string) filename) {
     import std.stdio: File;
     import std.conv: to;
 
     File file = File(filename, "r"); 
     scope(exit) { file.close(); }
     
-    void[] data;
+    ubyte[] data;
     while(!file.eof) {
-        data ~= cast(void[])(file.readln);
+        data ~= file.readln;
     }
 
     return data;
