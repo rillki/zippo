@@ -52,7 +52,8 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
         string path = Defaults.Path
 +/
 void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path) {
-    import std.stdio: writefln;
+    import std.stdio: writef, readln;
+    //import std.string: strip;
     import std.file: read;
     import std.algorithm: canFind;
 
@@ -61,12 +62,19 @@ void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path
 
     // read a zip file into memory
     ZipArchive zip = new ZipArchive(read(path ~ zipName));
+    
+    // print number of files in a zip file and
+    // then ask the user whether to print the contents of the zip or not
+    writef("The zip contains %s files. Show them all? (y/n): ", zip.directory.length);
+    char c = (readln())[0];
 
-    // iterate over all zip members
-    writefln("%10s\t%s", "Size", "Name");
-    foreach(file, data; zip.directory) {
-        // print some data about each member
-        writefln("%10s\t%s", data.expandedSize, file);
+    if(c == 'y') {
+	// iterate over all zip members
+	writef("%10s\t%s\n", "Size", "Name");
+	foreach(file, data; zip.directory) {
+	    // print some data about each member
+	    writef("%10s\t%s\n", data.expandedSize, file);
+	}
     }
 }
 
