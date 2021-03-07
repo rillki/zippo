@@ -1,7 +1,5 @@
 # Zippo
 
-### Errors found! Soon to be fixed, meanwhile do not use it!
-
 ### Command line ZIP utility
 
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
