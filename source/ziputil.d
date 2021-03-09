@@ -19,9 +19,9 @@ enum Defaults {
 +/
 void decompress(string zipName = Defaults.Name, string path = Defaults.Path, string[] files = null) {
     import std.stdio: writefln;
-    import std.file: read, write;
+    import std.file: read, write, mkdirRecurse;
     import std.algorithm: canFind;
-
+    
     path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
     zipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
 
@@ -29,12 +29,39 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
     ZipArchive zip = new ZipArchive(read(path ~ zipName));
     if(files is null) { // if true, unzip all files
         // iterate over all zip members
-        foreach(file, data; zip.directory) {
-            // decompress all archive members
+	// create the directory structure as in the zip file
+	foreach(file, data; zip.directory) {
+	    if(file[$-1] == '/') {
+		mkdirRecurse(file);
+	    }
+	}
+
+	// iterate over all zip members 
+	// unzip the files
+	foreach(file, data; zip.directory) {
+	    // skip empty directories
+	    if(file[$-1] == '/') { continue; }
+
+	    // TEMP: writefln("file: %s\n\n\n", file);
+	    
+	    // decompress all archive members
             write(file, zip.expand(data));
         }
     } else { // else unzip only the selected files
-        foreach(file; files) {
+	// iterate through the listed of files
+	// we want to unzip
+	foreach(findFile; files) {
+	    // iterate though the contents of zip directory
+	    // if file is found, unzip it
+	    foreach(file, data; zip.directory) {
+		if(file.canFind(findFile)) { 
+		    write(findFile, zip.expand(data));
+		    break;
+		}
+	    }
+	}
+	/*
+	foreach(file; files) {
             if((file in zip.directory) is null) {
                 writefln("Error: %s does not exist!", file);
                 continue;
@@ -42,7 +69,7 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
             
             // decompress the selected files
             write(file, zip.expand(zip.directory[file]));
-        }
+        }*/
     }
 }
 
@@ -63,7 +90,7 @@ void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path
     // read a zip file into memory
     ZipArchive zip = new ZipArchive(read(path ~ zipName));
     
-    // print number of files in a zip file and
+    // print number of files in a zip file
     // then ask the user whether to print the contents of the zip or not
     writef("The zip contains %s files. Show them all? (y/n): ", zip.directory.length);
     char c = (readln())[0];
@@ -159,8 +186,8 @@ void ignoreAndCompress(string zipName = Defaults.Name, string path = Defaults.Pa
         foreach(ignorefile; ignorefiles) {
             if(file == ignorefile) {
                 files = files.remove!(a => (a == ignorefile));
-                ignorefiles = ignorefiles.remove!(a => (a == ignorefile));
-            }
+		ignorefiles = ignorefiles.remove!(a => (a == ignorefile));
+	    }
         }
     }
     path = (path[$-1] != '/') ? (path ~ "/") : (path);
@@ -189,7 +216,7 @@ void ignoreAndCompress(string zipName = Defaults.Name, string path = Defaults.Pa
 +/
 string[] multipleSplit(const(string) str = "", const(string) sep = "") in {
     assert((str != ""), "Error: string is empty, nothing to split!");
-    assert((str != ""), "Error: seperator string is empty");
+    assert((sep != ""), "Error: seperator string is empty");
 } do {
     import std.algorithm: findSplit, canFind;
 
