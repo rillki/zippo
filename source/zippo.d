@@ -2,7 +2,9 @@ module zippo;
 
 import ziputil;
 
-import std.stdio: writeln;
+import std.stdio: writeln, writefln;
+import std.algorithm.searching: canFind;
+import std.algorithm.mutation: remove;
 
 /++ a list of all available commands
 +/
@@ -19,25 +21,32 @@ enum Commands {
 +/
 void zippoUtility(const(string[]) args) {
     immutable string help = "\n/******* Zippo: a command line ZIP utility *******/\n\n" ~
-                            "1) name=\"zipName\"\t\tZIP file name\n\t\t\t\t[default: ZIP_FILE is used]\n\n" ~
-                            "2) path=\"path\"\t\t\tspecify the directory\n\t\t\t\t[default: cwd is used]\n\n" ~
-                            "3) file=\"filename\"\t\tspecify a single file to convert to a ZIP\n\t\t\t\t[default: compresses all files in a directory]\n\n" ~
-                            "4) file=\"file1|file2\"\t\tuse the \"|\" bar to add multiple files\n\n" ~
-                            "5) zip=y/n/ls\t\t\ty - zip, n - unzip, ls - list zip contents\n\t\t\t\t[default: y]\n\n" ~
-                            "6) ignore=\"filename\"\t\tfiles to exclude from compression\n\t\t\t\t[default: none]\n\n" ~
-                            "7) ignore=\"file1|file2\"\t\tuse the \"|\" bar to exclude multiple files\n\n" ~
-                            "8) all\t\t\t\tuse the defaults\n";
+                            "<OPTIONS>:\n" ~
+                            "\tzip/unzip/list \t\t\tto zip, unzip or list zipfile contents\n\n" ~
+                            "\t\t\t\t\t [default: list]\n" ~
+                            "<WHERE AND WHAT>:\n" ~ 
+                            "\tpath=\"<...>\" \t\t\tspecify a directory, a file(s) to be ziped or unziped\n" ~
+                            "\t\t\t\t\t [default: cwd is used]\n" ~
+                            "\tfile=\"file1,file2,fileX\" \tuse the \",\" comma to zip/unzip specified files only\n" ~
+                            "\t\t\t\t\t [default: includes all files]\n" ~
+                            "\tignore=\"file1|file2,fileX\" \tuse the \",\" comma to exclude certains files\n" ~
+                            "\t\t\t\t\t [default: none are ignored]\n";
 
     // display help manual
-    if(args.length < 2 || args[1] == "-h") {
+    if(args.length < 2 || args[1] == "-h" || args[1] == "--help") {
         writeln(help);
         return;
     }
+    
+    // find what should it do: zip, unzip or list zipfile contents
+    immutable(string) action = args.canFind("zip") ? ("zip") : (args.canFind("unzip") ? ("unzip") : ("list"));
+    auto newArgs = (args.dup).remove!(a => a == action);
 
     // get command line arguments
-    string[string] info = getCommandLineArguments(args);
+    string[string] info = getCommandLineArguments(newArgs);
 
     // configure command line arguments (what is not specified will be set to the default value)
+    // TODO: start from here, simplify
     info.configureCommanLineArguments();
 
     // notify the user that the process has begun
