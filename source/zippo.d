@@ -2,7 +2,7 @@ module zippo;
 
 import ziputil;
 
-import std.stdio: writeln, writefln;
+import std.stdio: write, writeln, writefln;
 import std.algorithm.searching: canFind;
 import std.path: dirSeparator;
 
@@ -33,6 +33,10 @@ import std.path: dirSeparator;
 
 
 */
+
+// TODO: 
+// - ignoreAndCompress
+// - compress
 
 
 /++ a list of all available commands
@@ -130,12 +134,32 @@ immutable(string[string]) getCommandLineArguments(const(string[]) args) {
         const(string[string]) info
 +/
 void compressUtility(const(string[string]) info) {
+    import std.stdio: readln;
+
     // if the defaults are chosen, compress all files in the current directory and save to ZIP_FILE.zip
-    /*if((Commands.All in info) !is null) {
-        compressAll;
+    if(info[Commands.File] == "none" && info[Commands.Ignore] == "none") {
+        write("# Procede to ziping all files in the directory? (y/n): ");
+        const(char) c = (readln())[0];
+
+        if(c == 'y') {
+            compressAll;
+        }
+
+        return;
     } else {
-        // if files are not specified, then compress all files in a directory excluding the specified files, if provided
-        if((Commands.File in info) is null) {
+        // if some files are excluded from the compression ignore them
+        // and compress the rest;
+        // if only certain files are specified for compression
+        // ignore the rest
+        if(info[Commands.Ignore] != "none") {
+            ignoreAndCompress(info[Commands.Name], info[Commands.Path], info[Commands.Ignore].multipleSplit("|"));
+        } else {
+            compress(info[Commands.Name], info[Commands.Path], info[Commands.File].multipleSplit("|"));
+        }
+
+
+        
+        /*if((Commands.File in info) is null) {
             if(info[Commands.Ignore] != Defaults.Ignore) {
                 ignoreAndCompress(info[Commands.Name], info[Commands.Path], info[Commands.Ignore].multipleSplit("|"));
             } else {
@@ -143,8 +167,8 @@ void compressUtility(const(string[string]) info) {
             }
         } else {
             compress(info[Commands.Name], info[Commands.Path], info[Commands.File].multipleSplit("|"));
-        }
-    }*/
+        }*/
+    }
 }
 
 /++ decompresses zipped data
