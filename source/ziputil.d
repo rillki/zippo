@@ -78,30 +78,30 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
         string zipName = Defaults.Name
         string path = Defaults.Path
 +/
-void listZipContents(string zipName = Defaults.Name, string path = Defaults.Path) {
+void listZipContents(const(string) path) {
     import std.stdio: writef, readln;
-    //import std.string: strip;
-    import std.file: read;
-    import std.algorithm: canFind;
+    import std.file: exists, read;
 
-    path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
-    zipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
+    if(!path.exists()) {
+        writef("\n%s\n", "File does not exist!");
+        return;
+    }
 
     // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(path ~ zipName));
+    ZipArchive zip = new ZipArchive(read(path));
     
     // print number of files in a zip file
-    // then ask the user whether to print the contents of the zip or not
+    // ask the user whether to print the contents of the zip or not
     writef("The zip contains %s files. Show them all? (y/n): ", zip.directory.length);
-    char c = (readln())[0];
+    const(char) c = (readln())[0];
 
     if(c == 'y') {
-	// iterate over all zip members
-	writef("%10s\t%s\n", "Size", "Name");
-	foreach(file, data; zip.directory) {
-	    // print some data about each member
-	    writef("%10s\t%s\n", data.expandedSize, file);
-	}
+	    // iterate over all zip members
+	    writef("%10s\t%s\n", "Size", "Name");
+	    foreach(file, data; zip.directory) {
+	        // print some data about each member
+	        writef("%10s\t%s\n", data.expandedSize, file);
+	    }
     }
 }
 

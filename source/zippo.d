@@ -4,6 +4,7 @@ import ziputil;
 
 import std.stdio: writeln, writefln;
 import std.algorithm.searching: canFind;
+import std.path: dirSeparator;
 
 /*
 # ZIP
@@ -24,7 +25,7 @@ import std.algorithm.searching: canFind;
 
 # LIST
 : zippo list
-    list contents of all *.zip files in cwd
+    error! 
 : zippo list path=/Desktop/zipfile.zip
     list contents of 'zipfile.zip' located at '/Desktop'
 : zippo list path=/Desktop name=zipfile.zip
@@ -88,7 +89,11 @@ void zippoUtility(const(string[]) args) {
     } else if(action == "unzip") {
         decompressUtility(info);
     } else {
-        listZipContents(info[Commands.Name], info[Commands.Path]);
+        if(info[Commands.Path].canFind(".zip")) {
+            listZipContents(info[Commands.Path]);
+        } else {
+            listZipContents(info[Commands.Path] ~ dirSeparator ~ info[Commands.Name]);
+        }
     }
 
     // notify when the user when finished
