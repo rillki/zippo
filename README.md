@@ -2,6 +2,8 @@
 
 ### Command line ZIP utility
 
+## currently work in progress, check quickHowTo.txt to see what works
+
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
 ## Building the Zippo Utility:

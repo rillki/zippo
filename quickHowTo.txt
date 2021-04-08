@@ -1,0 +1,21 @@
+# Zippo - command line (de)compress utility
+
+# HELP MANUAL
+: zippo help
+    displays the help manual and exits
+
+# LISTING ZIP CONTENTS
+: zippo list
+    error!
+: zippo list file.zip
+    lists file.zip's contents
+
+# ZIPPING FILES
+none
+
+# UNZIPING FILES
+none
+
+
+
+
