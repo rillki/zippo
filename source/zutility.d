@@ -1,4 +1,4 @@
-module ziputil;
+module zutility;
 
 // std.zip functionality that is used
 import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
@@ -11,6 +11,48 @@ enum Defaults {
     Zip = "y",
     Ignore = "none"
 }
+
+/* lists zip file contents
+    in:
+	string zipName = Defaults.Name
+        string path = Defaults.Path
+*/
+void listZipContents(const(string) filename) {
+    import std.stdio: writef, readln;
+    import std.file: exists, read;
+    
+    // check if file exists
+    if(!filename.exists) {
+        writef("\n%s%s%s\n\n", "# error: File <", filename, "> does not exist!");
+        return;
+    }
+
+    // read zip file into memory
+    ZipArchive zip = new ZipArchive(read(filename));
+    
+    // print the number of files in a zip file
+    // ask the user whether to print the contents of the zip or not
+    writef("\n<%s> contains %s files. Show them all? (y/n): ", filename, zip.directory.length);
+    //const(char) c = (readln())[0];
+
+    if((readln()[0]) == 'y') {
+	// iterate over all zip members
+	writef("%10s\t%s\n", "Size", "Name");
+	foreach(file, data; zip.directory) {
+	    // print some info about each member
+	    writef("%10s\t%s\n", data.expandedSize, file);
+	}
+    } else {
+	writef("%s\n", "# error: Canceled...");
+    }
+
+    writef("\n");
+}
+
+
+/***************OLD STUFF**********************/
+
+
 
 /++ unzips the zip file (or the specified files only contained in a zip)
     in:
@@ -70,38 +112,6 @@ void decompress(string zipName = Defaults.Name, string path = Defaults.Path, str
             // decompress the selected files
             write(file, zip.expand(zip.directory[file]));
         }*/
-    }
-}
-
-/++ lists zip file contents
-    in:
-        string zipName = Defaults.Name
-        string path = Defaults.Path
-+/
-void listZipContents(const(string) path) {
-    import std.stdio: writef, readln;
-    import std.file: exists, read;
-
-    if(!path.exists()) {
-        writef("\n%s\n", "File does not exist!");
-        return;
-    }
-
-    // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(path));
-    
-    // print number of files in a zip file
-    // ask the user whether to print the contents of the zip or not
-    writef("The zip contains %s files. Show them all? (y/n): ", zip.directory.length);
-    const(char) c = (readln())[0];
-
-    if(c == 'y') {
-	    // iterate over all zip members
-	    writef("%10s\t%s\n", "Size", "Name");
-	    foreach(file, data; zip.directory) {
-	        // print some data about each member
-	        writef("%10s\t%s\n", data.expandedSize, file);
-	    }
     }
 }
 
