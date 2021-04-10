@@ -14,8 +14,7 @@ enum Defaults {
 
 /* lists zip file contents
     in:
-	string zipName = Defaults.Name
-        string path = Defaults.Path
+        string filename => path to the *.zip including the zip file itself
 */
 void listZipContents(const(string) filename) {
     import std.stdio: writef, readln;
@@ -49,71 +48,143 @@ void listZipContents(const(string) filename) {
     writef("\n");
 }
 
-
-/***************OLD STUFF**********************/
-
-
-
-/++ unzips the zip file (or the specified files only contained in a zip)
+/* unzips the zip file (or the specified files only contained in a zip)
     in:
-        string zipName = Defaults.Name
-        string path = Defaults.Path
-+/
-void decompress(string zipName = Defaults.Name, string path = Defaults.Path, string[] files = null) {
-    import std.stdio: writefln;
-    import std.file: read, write, mkdirRecurse;
+	string filename => path to the *.zip including the zip file itself
+        string[] files	=> files to unzip, if none are specified, unzips all
+*/
+void decompress(const string filename, const string[] files = null, const bool verbose = false) {
+    import std.stdio: writef;
+    import std.file: isDir, exists, read, write, mkdirRecurse;
     import std.algorithm: canFind;
     
-    path = (path != "" && path[$-1] != '/') ? (path ~ "/") : (path);
-    zipName = (zipName.canFind(".zip")) ? (zipName) : (zipName ~ ".zip");
+    // check if file exists
+    if(!filename.exists) {
+        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
+        return;
+    }
 
     // read a zip file into memory
-    ZipArchive zip = new ZipArchive(read(path ~ zipName));
-    if(files is null) { // if true, unzip all files
-        // iterate over all zip members
-	// create the directory structure as in the zip file
-	foreach(file, data; zip.directory) {
-	    if(file[$-1] == '/') {
-		mkdirRecurse(file);
-	    }
-	}
+    ZipArchive zip = new ZipArchive(read(filename));
+   
+    // create the directory structure as in the zip file
+    foreach(file, data; zip.directory) {
+        if(file[$-1] == '/') {
+	   mkdirRecurse(file);
+        }
+    }
 
-	// iterate over all zip members 
-	// unzip the files
+    // unzip all files
+    if(files is null) {
 	foreach(file, data; zip.directory) {
 	    // skip empty directories
 	    if(file[$-1] == '/') { continue; }
-
-	    // TEMP: writefln("file: %s\n\n\n", file);
+	
+	    // decompress the archive member
+	    file.write(zip.expand(data));    
 	    
-	    // decompress all archive members
-            write(file, zip.expand(data));
-        }
-    } else { // else unzip only the selected files
-	// iterate through the listed of files
-	// we want to unzip
+	    // verbose output
+	    if(verbose) {
+		writef("Unzipped: %s\n", file);
+	    }
+	}
+    } else { // unzip specified files only
 	foreach(findFile; files) {
-	    // iterate though the contents of zip directory
-	    // if file is found, unzip it
 	    foreach(file, data; zip.directory) {
-		if(file.canFind(findFile)) { 
-		    write(findFile, zip.expand(data));
+		if(file.canFind(findFile)) {
+		    // decompress the archive member
+		    file.write(zip.expand(data));
+		    
+		    // verbose output
+		    if(verbose) {
+			writef("Unzipped: %s\n", file);
+		    }
+
 		    break;
 		}
 	    }
 	}
-	/*
-	foreach(file; files) {
-            if((file in zip.directory) is null) {
-                writefln("Error: %s does not exist!", file);
-                continue;
-            }
-            
-            // decompress the selected files
-            write(file, zip.expand(zip.directory[file]));
-        }*/
     }
+
+    writef("\n");
 }
+
+/* reads from a file and returns the data as ubyte[]
+    in:
+        const string filename
+    out:
+        ubyte[]
+*/
+ubyte[] readFileData(const string filename) {
+    import std.stdio: writef, File;
+    import std.file: exists;
+    import std.conv: to;
+    
+    // check if file exists
+    if(!filename.exists) {
+        writef("\n%s%s%s\n\n", "# error: File <", filename, "> does not exist!");
+        return [];
+    }
+    
+    // open the file
+    File file = File(filename, "r"); 
+    scope(exit) { file.close(); }
+    
+    // read file data
+    ubyte[] data;
+    while(!file.eof) {
+        data ~= file.readln;
+    }
+
+    return data;
+}
+
+/* lists all files in a directory
+    in:
+        const string path
+    out:
+        string[]
+*/
+string[] listdir(const string path) {
+    import std.algorithm;
+    import std.array;
+    import std.file;
+    import std.path;
+
+    return std.file.dirEntries(((path == "") ? (getcwd) : (path)), SpanMode.shallow)
+        .filter!(a => a.isFile)
+        .map!(a => std.path.baseName(a.name))
+        .array;
+}
+
+/* splits a string into multiple strings given a seperator
+    in:
+        const string str => string
+        const string sep => seperator
+    out:
+        string[]
+*/
+string[] multipleSplit(const string str = "", const string sep = "") { 
+    import std.algorithm: findSplit, canFind;
+
+    string[] s;
+    if(str.canFind(sep)) {
+	auto temp = str.findSplit(sep);
+	s ~= temp[0];
+	
+	s ~= temp[$-1].multipleSplit(sep);
+    } else {
+	s ~= str;
+    }
+
+    return s;
+}
+
+
+
+
+/***************OLD STUFF**********************/
+
 
 /++ compresses given files in a specified directory into a single zip file,
 if the directory is not specified, uses the current working directory
@@ -217,32 +288,6 @@ void ignoreAndCompress(string zipName = Defaults.Name, string path = Defaults.Pa
     write((zipName ~ ".zip"), zip.build());
 }
 
-/++ splits a string into multiple strings given a seperator
-    in:
-        const(string) str = ""
-        const(string) path = ""
-    out:
-        string[]
-+/
-string[] multipleSplit(const(string) str = "", const(string) sep = "") in {
-    assert((str != ""), "Error: string is empty, nothing to split!");
-    assert((sep != ""), "Error: seperator string is empty");
-} do {
-    import std.algorithm: findSplit, canFind;
-
-    static string[] s;
-    if(str.canFind(sep)) {
-        auto temp = findSplit(str, sep);
-        s ~= temp[0];
-
-        multipleSplit(temp[2], sep);
-    } else {
-        s ~= str;
-    }
-
-    return s;
-}
-
 /++ compresses all files in the current working directory into a single zip file
     in:
         const(string) zipName = Defaults.Name
@@ -265,41 +310,3 @@ void compressAllCWD(const(string) zipName = Defaults.Name) {
     write((zipName ~ ".zip"), zip.build());
 }
 
-/++ reads from a file and returns the data as ubyte[]
-    in:
-        const(string) filename
-    out:
-        ubyte[]
-+/
-ubyte[] readFileData(const(string) filename) {
-    import std.stdio: File;
-    import std.conv: to;
-
-    File file = File(filename, "r"); 
-    scope(exit) { file.close(); }
-    
-    ubyte[] data;
-    while(!file.eof) {
-        data ~= file.readln;
-    }
-
-    return data;
-}
-
-/++ lists all files in a directory
-    in:
-        const(string) path
-    out:
-        string[]
-+/
-string[] listdir(const(string) path) {
-    import std.algorithm;
-    import std.array;
-    import std.file;
-    import std.path;
-
-    return std.file.dirEntries(((path == "") ? (getcwd) : (path)), SpanMode.shallow)
-        .filter!(a => a.isFile)
-        .map!(a => std.path.baseName(a.name))
-        .array;
-}

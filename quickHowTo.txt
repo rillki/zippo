@@ -14,7 +14,14 @@
 none
 
 # UNZIPING FILES
-none
+: zippo unzip
+    error!
+: zippo unzip file.zip
+    unzips file.zip
+: zippo unzip file.zip -f=file1,file2,...,fileX
+    unzips file1, file2, ..., fileX only
+
+
 
 
 
