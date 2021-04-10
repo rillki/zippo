@@ -23,7 +23,7 @@ void listZipContents(const(string) filename) {
     
     // check if file exists
     if(!filename.exists) {
-        writef("\n%s%s%s\n\n", "# error: File <", filename, "> does not exist!");
+        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
         return;
     }
 
