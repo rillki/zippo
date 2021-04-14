@@ -2,12 +2,16 @@
 
 ### Command line ZIP utility
 
-## readme and wiki needs updating, check quickHowTo.txt and Makefile to find out how to compile
-
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
 ## Building the Zippo Utility:
-Make sure you have a `dmd` compiler and `make` installed on your system. Then `git clone` the zippo repository and `cd` to `/zippo/source/`. 
+Check if you have installed the `dmd`, `gdc` or `ldc` compiler, and `make` (optional). Then: 
+```
+git clone https://github.com/rillki/zippo
+``` 
+```
+cd zippo
+```
 Finally, type: 
 ```
 make
@@ -15,28 +19,34 @@ make
 
 Or you can type out the entire command:
 ```D
-dmd -of=zippo main.d zippo.d ziputil.d
+dmd -of=zippo source/*
 ```
 
-Replace `dmd` with the D compiler you have installed on your system.
+Replace `dmd` with the D compiler you have installed on your system. It will produce an executable `zippo`, add it to your `PATH` on your system.
 
 ## Usage:
 
-The full command looks like this:
+Compressing a file:
 ```D
-./zippo zip=y name="ZIP_FILE" path="/Desktop/media/files" file="file1|file2|...|fileX" exclude=none
+zippo zip --name=myzipfile.zip --path=/Desktop/media/mymovie.mp4
+```
+`--name` is optional, it will automatically pick up the name.
+
+Decompressing a file:
+```D
+zippo unzip myzipfile.zip
 ```
 
-The shortest command using the default configuration:
+Listing file contents:
 ```D
-./zippo all
+zippo list myzipfile.zip
 ```
 
 When a value for the command is not specified, the default value is used. For example, if `path` is not provided, then the current working directory is used.
 
 To check out the full list of available commands:
 ```D
-./zippo -h
+zippo help
 ```
 
 ## The Zippo Wiki page
