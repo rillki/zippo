@@ -11,7 +11,16 @@
     lists file.zip's contents
 
 # ZIPPING FILES
-none
+: zippo zip
+	zips all files in cwd
+: zippo zip -p=tempFolder
+    zips the entire tempFolder directory
+: zippo zip -f=file1,file2,...,fileX
+	zips file1, file2, ..., fileX only
+: zippo zip -n=file.zip -f=file1.jpg -p=Desktop/temp
+	zips file1.jpg located at Desktop/temp to file.zip
+: zippo zip file.zip -i=file1.jpg
+    zips all files in cwd except for file1.jpg
 
 # UNZIPING FILES
 : zippo unzip
@@ -20,6 +29,8 @@ none
     unzips file.zip
 : zippo unzip file.zip -f=file1,file2,...,fileX
     unzips file1, file2, ..., fileX only
+: zippo unzip file.zip -i=file1,file2,...,fileX
+    unzips all files except for file1, file2, ..., fileX
 
 
 
