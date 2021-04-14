@@ -22,7 +22,7 @@ Or you can type out the entire command:
 dmd -of=zippo source/*
 ```
 
-Replace `dmd` with the D compiler you have installed on your system. It will produce an executable `zippo`, add it to your `PATH` on your system.
+Replace `dmd` with the D compiler you have installed on your system. It will produce an executable called `zippo`, add it to your `PATH` on your system.
 
 ## Usage:
 
