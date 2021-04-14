@@ -5,7 +5,7 @@
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
 ## Building the Zippo Utility:
-Check if you have installed the `dmd`, `gdc` or `ldc` compiler, and `make` (optional). Then: 
+Check if you have `dmd`, `gdc` or `ldc` compiler installed on your system, and `make` (optional). Then: 
 ```
 git clone https://github.com/rillki/zippo
 ``` 
