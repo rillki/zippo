@@ -2,7 +2,7 @@
 
 ### Command line ZIP utility
 
-## currently work in progress, check quickHowTo.txt to see what works
+## readme and wiki needs updating, check quickHowTo.txt and Makefile to find out how to compile
 
 Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
 
