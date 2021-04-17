@@ -97,6 +97,11 @@ void decompress(const string filename = null, const string[] files = null, const
                     writef("Decompressed: %s\n", pair.key);
 	            }
             }
+            
+            // verbose output
+            if(verbose) {
+                writef("\nINFO: %s files decompressed.\n", zip.totalEntries);
+            }
         } else { // unzip all files except for files that should be ignored
             // remove files that sould be ignored
             auto ufiles = zip.directory.byKeyValue.array;
@@ -115,6 +120,11 @@ void decompress(const string filename = null, const string[] files = null, const
     	        if(verbose) {
     		        writef("Decompressed: %s\n", pair.key);
         		}
+            }
+
+            // verbose output
+            if(verbose) {
+                writef("\nINFO: %s files decompressed.\n", ufiles.length);
             }
         }
     } else { // unzip specified files only
@@ -135,6 +145,11 @@ void decompress(const string filename = null, const string[] files = null, const
             if(verbose) {
     		    writef("Unzipped: %s\n", pair.key);
     		}
+        }
+
+        // verbose output
+        if(verbose) {
+            writef("\nINFO: %s files decompressed.\n", ufiles.length);
         }
     }
     
@@ -214,6 +229,11 @@ void compress(string filename = null, string path = null, const string[] files =
         if(zip.totalEntries > 0) {
             write(filename, zip.build());
         }
+
+        // verbose output
+        if(verbose) {
+            writef("\nINFO: %s files compressed.", zip.totalEntries);
+        }
     }
 
     writef("\n");
@@ -264,6 +284,11 @@ private void compressAll(const string filename = null, const string path = null,
  
     if(zip.totalEntries > 0) {
         write(filename, zip.build());
+    }
+
+    // verbose output
+    if(verbose) {
+        writef("\nINFO: %s files compressed.", zip.totalEntries);
     }
     
     writef("\n");
@@ -321,6 +346,11 @@ void ignoreAndCompress(const string filename = null, string path = null, const s
 
     if(zip.totalEntries > 0) {
         write(filename, zip.build());
+    }
+
+    // verbose output
+    if(verbose) {
+        writef("\nINFO: %s files compressed.", zip.totalEntries);
     }
 
     writef("\n");
