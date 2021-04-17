@@ -10,7 +10,8 @@ import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
 void listZipContents(const string filename = null) {
     import std.stdio: writef, readln;
     import std.file: exists, read;
-    
+    import std.conv: to;
+
     // check if file exists
     if(!filename.exists) {
         writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
@@ -29,7 +30,17 @@ void listZipContents(const string filename = null) {
         writef("%10s\t%s\n", "Size", "Name");
         foreach(file, data; zip.directory) {
             // print some info about each member
-            writef("%10s\t%s\n", data.expandedSize, file);
+            string fileSize = (
+                (data.expandedSize > 1_000_000_000) ? ((data.expandedSize.to!float / 1_000_000_000).to!string ~ " Gb") : (
+                    (data.expandedSize > 1_000_000) ? ((data.expandedSize.to!float / 1_000_000).to!string ~ " Mb") : (
+                        (data.expandedSize > 1_000) ? ((data.expandedSize.to!float / 1_000).to!string ~ " Kb") : (
+                            data.expandedSize.to!string ~ "  b"
+                        )
+                    )
+                )
+            );
+            
+            writef("%10s\t%s\n", fileSize, file);
         }
     } else {
         writef("%s\n", "# error: Canceled...");
