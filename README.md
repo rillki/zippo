@@ -19,7 +19,7 @@ make
 
 Or you can type out the entire command:
 ```D
-dmd -of=zippo source/*
+dmd -of=zippo source/main.d source/zinterface.d source/zutility.d
 ```
 
 Replace `dmd` with the D compiler you have installed on your system. It will produce an executable called `zippo`, add it to your `PATH` on your system.
