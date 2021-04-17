@@ -13,7 +13,7 @@ void listZipContents(const string filename = null) {
     
     // check if file exists
     if(!filename.exists) {
-        writef("\n%s%s%s\n\n", "# ==> error: Zip file <", filename, "> does not exist!");
+        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
         return;
     }
 
@@ -32,7 +32,7 @@ void listZipContents(const string filename = null) {
             writef("%10s\t%s\n", data.expandedSize, file);
         }
     } else {
-        writef("%s\n", "# ==> error: Canceled...");
+        writef("%s\n", "# error: Canceled...");
     }
 
     writef("\n");
@@ -48,15 +48,16 @@ void listZipContents(const string filename = null) {
 void decompress(const string filename = null, const string[] files = null, const string[] fignore = null, const bool verbose = false) {
     import std.stdio: writef;
     import std.file: isDir, exists, read, write, mkdirRecurse;
-    import std.algorithm.searching: canFind;
-    import std.algorithm.iteration: each;
-    import std.algorithm.mutation: remove;
     import std.path: dirSeparator;
+    import std.array: array;
     import std.conv: to;
-    
+    import std.algorithm.searching: canFind;
+    import std.algorithm.mutation: remove;
+    import std.parallelism: parallel;
+
     // check if file exists
     if(!filename.exists) {
-        writef("\n%s%s%s\n\n", "# ==> error: Zip file <", filename, "> does not exist!");
+        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
         return;
     }
 
@@ -72,62 +73,57 @@ void decompress(const string filename = null, const string[] files = null, const
 
     // unzip all files
     if(files is null) {
-        if(fignore is null) { // unzip all files
-	        foreach(file, data; zip.directory) {
+        if(fignore is null) {
+	        foreach(pair; zip.directory.byKeyValue.parallel) {
 	            // skip empty directories
-	            if(file[$-1] == dirSeparator.to!char) { continue; }
+	            if(pair.key[$-1] == dirSeparator.to!char) { continue; }
 	
 	            // decompress the archive member
-	            file.write(zip.expand(data));    
+	            pair.key.write(zip.expand(pair.value));    
 	    
 	            // verbose output
 	            if(verbose) {
-                    writef("Unzipped: %s\n", file);
+                    writef("Decompressed: %s\n", pair.key);
 	            }
             }
         } else { // unzip all files except for files that should be ignored
-            string[] findFiles = zip.directory.keys.dup;
+            // remove files that sould be ignored
+            auto ufiles = zip.directory.byKeyValue.array;
             foreach(fi; fignore) {
-                findFiles = findFiles.remove!(a => a.canFind(fi));
+                ufiles = ufiles.remove!(a => a.key.canFind(fi));
             }
 
-            foreach(file, data; zip.directory) {
+            foreach(pair; ufiles.parallel) {
 	            // skip empty directories
-                if(file[$-1] == dirSeparator.to!char) { continue; }
-                
-                foreach(findFile; findFiles) {
-                    if(file == findFile) {
-                        // decompress the archive member
-        		        file.write(zip.expand(data));
-        		    
-        		        // verbose output
-        		        if(verbose) {
-        			        writef("Unzipped: %s\n", file);
-        		        }
-
-                        break;
-                    }
-                }
+                if(pair.key[$-1] == dirSeparator.to!char) { continue; }
+                    
+                // decompress the archive member
+    		    pair.key.write(zip.expand(pair.value));
+        	    
+    	        // verbose output
+    	        if(verbose) {
+    		        writef("Decompressed: %s\n", pair.key);
+        		}
             }
         }
     } else { // unzip specified files only
-        foreach(file, data; zip.directory) {
-            // skip empty directories
-            if(file[$-1] == dirSeparator.to!char) { continue; }
-            
-            foreach(findFile; files) {
-                if(file.canFind(findFile)) {
-                    // decompress the archive member
-        		    file.write(zip.expand(data));
-        		    
-        		    // verbose output
-        		    if(verbose) {
-        			    writef("Unzipped: %s\n", file);
-        		    }
+        // remove all files that we do not need
+        auto ufiles = zip.directory.byKeyValue.array;
+        foreach(file; files.parallel) {
+            ufiles = ufiles.remove!(a => !a.key.canFind(file));
+        }
 
-                    break;
-                }
-            }
+        foreach(pair; ufiles.parallel) {
+            // skip empty directories
+            if(pair.key[$-1] == dirSeparator.to!char) { continue; }
+
+            // decompress the archive member
+    		pair.key.write(zip.expand(pair.value));
+            
+            // verbose output
+            if(verbose) {
+    		    writef("Unzipped: %s\n", pair.key);
+    		}
         }
     }
     
@@ -145,9 +141,13 @@ void decompress(const string filename = null, const string[] files = null, const
 */
 void compress(string filename = null, string path = null, const string[] files = null, const string[] fignore = null, const bool verbose = false) {
     import std.stdio: writef;
-    import std.file: write, exists, getcwd;
+    import std.file: write, exists, getcwd, isDir;
     import std.path: dirSeparator;
-    
+    import std.parallelism: parallel;
+    import std.algorithm.mutation: remove;
+    import std.algorithm.searching: canFind;
+
+    // default file name
     if(filename is null) { filename = "archive.zip"; }
 
     // check if path is specified
@@ -169,22 +169,29 @@ void compress(string filename = null, string path = null, const string[] files =
             ignoreAndCompress(filename, path, fignore, verbose);
         }
     } else { // compress the specified files only
+        // list dir contents
+        string[] zfiles = path.listdir;
+
+        // exclude files from compression 
+        foreach(file; files.parallel) {
+            zfiles = zfiles.remove!(a => !a.canFind(file));
+        }
+
         // zip specified files only
         ZipArchive zip = new ZipArchive(); 
         zip.isZip64(true);
 
-        foreach(file; files) {
-            if(!exists(path ~ file)) {
-                writef("# ==> error: %s does not exist!\n", file);
-                continue;
-            }
-
+        foreach(file; zfiles.parallel) {
             // archive the file
             ArchiveMember member = new ArchiveMember();
-            member.name = file;
-            member.expandedData(readFileData(path ~ file));
+            if(file.isDir) {
+                member.name = file ~ dirSeparator;
+            } else {
+                member.name = file;
+                member.expandedData(readFileData(file));
+            }
+            
             member.compressionMethod = CompressionMethod.deflate;
-
             zip.addMember(member);
 
             // verbose output
@@ -211,22 +218,30 @@ void compress(string filename = null, string path = null, const string[] files =
 private void compressAll(const string filename = null, const string path = null, const bool verbose = false) {
     import std.stdio: writef;
     import std.file: write, isDir;
+    import std.path: dirSeparator;
     import std.array: array;
+    import std.conv: to;
     import std.algorithm.iteration: filter;
+    import std.parallelism: parallel;
 
-    // list dir contents
-    string[] files = path.listdir.filter!(f => !f.isDir).array;
-
-    // create zip archive
+    // get all dir contents
+    string[] files = path.listdir;
+    
+    // create a zip archive file
     ZipArchive zip = new ZipArchive(); 
     zip.isZip64(true);
-
-    foreach(file; files) {
+    
+    // zip files
+    foreach(file; files.parallel) {
         ArchiveMember member = new ArchiveMember();
-        member.name = file;
-        member.expandedData(readFileData(file));
-        member.compressionMethod = CompressionMethod.deflate;
+        if(file.isDir) {
+            member.name = file ~ dirSeparator;
+        } else {
+            member.name = file;
+            member.expandedData(readFileData(file));
+        }
 
+        member.compressionMethod = CompressionMethod.deflate;
         zip.addMember(member);
 
         // verbose output
@@ -235,7 +250,11 @@ private void compressAll(const string filename = null, const string path = null,
         }
     }
 
-    write(filename, zip.build());
+ 
+    if(zip.totalEntries > 0) {
+        write(filename, zip.build());
+    }
+    
     writef("\n");
 }
 
@@ -250,30 +269,37 @@ private void compressAll(const string filename = null, const string path = null,
 void ignoreAndCompress(const string filename = null, string path = null, const string[] fignore = null, const bool verbose = false) {
     import std.stdio: writef;
     import std.file: write, isDir;
+    import std.path: dirSeparator;
     import std.array: array;
     import std.algorithm.iteration: filter;
     import std.algorithm.searching: canFind;
     import std.algorithm.mutation: remove;
+    import std.parallelism: parallel;
 
     // list dir contents
-    string[] files = path.listdir.filter!(f => !f.isDir).array;
+    string[] zfiles = path.listdir;
 
     // exclude files from compression entered by the user
     foreach(fi; fignore) {
-        files = files.remove!(a => a.canFind(fi));
+        zfiles = zfiles.remove!(a => a.canFind(fi));
     }
 
     // zip specified files only
     ZipArchive zip = new ZipArchive(); 
     zip.isZip64(true);
-
-    foreach(file; files) {
+    
+    // zip files
+    foreach(file; zfiles.parallel) {
         // archive the file
         ArchiveMember member = new ArchiveMember();
-        member.name = file;
-        member.expandedData(readFileData(file));
-        member.compressionMethod = CompressionMethod.deflate;
+        if(file.isDir) {
+            member.name = file ~ dirSeparator;
+        } else {
+            member.name = file;
+            member.expandedData(readFileData(file));
+        }
 
+        member.compressionMethod = CompressionMethod.deflate;
         zip.addMember(member);
 
         // verbose output
@@ -302,7 +328,7 @@ ubyte[] readFileData(const string filename) {
     
     // check if file exists
     if(!filename.exists) {
-        writef("%s%s%s\n", "# ==> error: File <", filename, "> does not exist!");
+        writef("%s%s%s\n", "# error: File <", filename, "> does not exist!");
         return [];
     }
     
@@ -325,14 +351,14 @@ ubyte[] readFileData(const string filename) {
     out:
         string[]
 */
+
 string[] listdir(const string path = null) {
-    import std.algorithm.iteration: map, filter;
+    import std.algorithm.iteration: map;
     import std.array: array;
-    import std.file: dirEntries, isFile, SpanMode, getcwd;
+    import std.file: dirEntries, SpanMode, getcwd;
     import std.path: baseName;
 
     return dirEntries(((path is null) ? (getcwd) : (path)), SpanMode.breadth)
-        .filter!(f => f.isFile)
         .map!(a => a.name)
         .array;
 }
