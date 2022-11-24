@@ -1,3 +1,8 @@
+# custom
+lib/
+bin/
+__internal/
+
 # mac files
 .DS_Store
 

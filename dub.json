@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"rillki"
+	],
+	"copyright": "Copyright © 2022, rillki",
+	"description": "A simple command line ZIP utility.",
+	"license": "MIT",
+	"name": "zippo",
+    "targetPath": "bin"
+}
+
+
+
