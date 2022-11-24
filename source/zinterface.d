@@ -11,7 +11,9 @@ import std.getopt: getopt, GetoptResult, defaultGetoptPrinter;
 // Zippo module containing functions for working with *.zip files
 import zutil = zutility;
 
-// std commands
+enum ZIPPO_VERSION = "0.1.0";
+
+/++ // std commands
 enum Commands: string {
     zip = "zip",
     unzip = "unzip",
@@ -34,44 +36,80 @@ enum Options: string {
     ignoreLong = "--ignore",
 
     none = "none",
-}
+} +/
 
-// main entry point
-void app(const string[] args) {
-    // quick overview 
+void app(string[] args) {
+    if(args.length < 2) {
+        writefln("#zippo: no commands provided! See \'zippo help\' for more info.");
+        return;
+    }
+
+    // check case
+    switch(args[1]) {
+        case "z":
+        case "zip":
+            break;
+        case "u":
+        case "unzip":
+            break;
+        case "l":
+        case "list":
+            break;
+        case "v":
+        case "version":
+            import std.compiler: version_major, version_minor;
+            writefln("zippo version %s - A simple command line ZIP utility.", ZIPPO_VERSION);
+            writefln("Built with %s v%s.%s on %s", __VENDOR__, version_major, version_minor, __DATE__);
+            break;
+        case "h":
+        case "help":
+            writefln("zippo version %s - A simple command line ZIP utility.", ZIPPO_VERSION);
+            writefln("z     zip [OPTIONS]  initializes a new database");
+            writefln("u   unzip [OPTIONS]  removes an existing database");
+            writefln("l    list [OPTIONS]  switches to the specified database");
+            writefln("v version            display current version");
+            writefln("h    help            This help manual.\n");
+            writefln("EXAMPLE: zippo zip ");
+            break;
+        default:
+            writefln("#zippo: Unrecognized option %s!", args[1]);
+            break;
+    }
+
+    /++ // quick overview 
     immutable string manpage = "\nOVERVIEW: Zippo - the (de)compression utility v2.0\n" ~
-				"\nUSAGE: zippo [command] [options]\n" ~
-				"\nCOMMANDS:" ~
-				"\n\tzip\t\tcompresses a file(s)" ~
-				"\n\tunzip\t\tdecompresses a zip file" ~
-				"\n\tlist\t\tlists zip file contents" ~
-				"\n\thelp\t\tdisplay available options and exit\n" ~
-				"\nOPTIONS:" ~
-				"\n\t-v, --verbose\tverbose output" ~ 
-				"\n\t-f, --files\t(un)zip selected files: -f=file1,file2,...,fileX" ~
-				"\n\t-n, --name\tzipfile name: -n=file.zip" ~
-				"\n\t-p, --path\tpath to files, which should be (de)compressed: -p=someFolder/anotherFolder" ~ 
-				"\n\t-i, --ignore\texclude files from (de)compression: -i=file.jpg\n";
+                "\nUSAGE: zippo [command] [options]\n" ~
+                "\nCOMMANDS:" ~
+                "\n\tzip\t\tcompresses a file(s)" ~
+                "\n\tunzip\t\tdecompresses a zip file" ~
+                "\n\tlist\t\tlists zip file contents" ~
+                "\n\thelp\t\tdisplay available options and exit\n" ~
+                "\nOPTIONS:" ~
+                "\n\t-v, --verbose\tverbose output" ~ 
+                "\n\t-f, --files\t(un)zip selected files: -f=file1,file2,...,fileX" ~
+                "\n\t-n, --name\tzipfile name: -n=file.zip" ~
+                "\n\t-p, --path\tpath to files, which should be (de)compressed: -p=someFolder/anotherFolder" ~ 
+                "\n\t-i, --ignore\texclude files from (de)compression: -i=file.jpg\n";
     
     // if too few args passed, safely exit
     if(args.length < 2) {
-	writef("%s\n", "\n# Command wasn't specified!\n# Use 'zippo help' for more information.\n");
-	return;
+    writef("%s\n", "\n# Command wasn't specified!\n# Use 'zippo help' for more information.\n");
+    return;
     }
     
     // Command: zip/unzip/list/help
     immutable Commands command = (args.canFind([Commands.zip], [Commands.unzip], [Commands.list])) ? 
-	(args[1].to!Commands) : (Commands.help);
+    (args[1].to!Commands) : (Commands.help);
     
     // Options: find the zip filename
     auto l = ((const string[] args, const string canfind) => {
-		foreach(arg; args) {
-	    	if(arg.canFind(canfind)) {
-				return arg;
-	    	}
-		}
+        foreach(arg; args) {
+            if(arg.canFind(canfind)) {
+                return arg;
+            }
+        }
 
-		return null;
+        return null;
     });
     string filename = zutil.multipleSplit(l(args, ".zip")(), "=")[$-1];
 
@@ -89,38 +127,41 @@ void app(const string[] args) {
 
     // verbose output, if enabled
     if(verbose) {
-		writef("\n");
-		writef("%17s\t%s\n", "Command:", command);
-		writef("%17s\t%s\n", "Zip filename:", ((filename is null) ? ("file does not exist!") : (filename)));
-		writef("%17s\t%s\n", "Path:", (path is null) ? (getcwd) : (path));
+        writef("\n");
+        writef("%17s\t%s\n", "Command:", command);
+        writef("%17s\t%s\n", "Zip filename:", ((filename is null) ? ("file does not exist!") : (filename)));
+        writef("%17s\t%s\n", "Path:", (path is null) ? (getcwd) : (path));
 
-		if(command != Commands.list) {
-			writef("%17s\t%s\n", "Files to (un)zip:", ((files is null) ? ("all") : (files)));
-			writef("%17s\t%s\n", "Files to ignore:", ((fignore is null) ? (Options.none) : (fignore)));
-		}
-	
-		writef("\n");
+        if(command != Commands.list) {
+            writef("%17s\t%s\n", "Files to (un)zip:", ((files is null) ? ("all") : (files)));
+            writef("%17s\t%s\n", "Files to ignore:", ((fignore is null) ? (Options.none) : (fignore)));
+        }
+    
+        writef("\n");
     }
     
     // zip/list/unzip based on command entered
     switch(command) with(Commands) {
-		case zip:
-			zutil.compress(filename, path, 
-							((files is null) ? (null) : (zutil.multipleSplit(files, ","))), 
-							((fignore is null) ? (null) : (zutil.multipleSplit(fignore, ","))), verbose);
-			break;
-		case unzip:
-		    zutil.decompress(filename,
+        case zip:
+            zutil.compress(filename, path, 
+                            ((files is null) ? (null) : (zutil.multipleSplit(files, ","))), 
+                            ((fignore is null) ? (null) : (zutil.multipleSplit(fignore, ","))), verbose);
+            break;
+        case unzip:
+            zutil.decompress(filename,
                             ((files is null) ? (null) : (zutil.multipleSplit(files, ","))),
                             ((fignore is null) ? (null) : (zutil.multipleSplit(fignore, ","))), verbose);
-		    break;
-		case list:
-		    zutil.listZipContents(filename);
-		    break;
-		default:
-		    writef("%s\n", manpage);
-		    return;
-    }
+            break;
+        case list:
+            zutil.listZipContents(filename);
+            break;
+        default:
+            writef("%s\n", manpage);
+            return;
+    }+/
 }
 
+void zippoZip() {}
+void zippoUnzip() {}
+void zippoList() {}
 
