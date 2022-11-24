@@ -6,6 +6,7 @@ import std.conv: to;
 import std.algorithm.searching: canFind, startsWith;
 import std.algorithm.iteration: filter, each;
 import std.file: getcwd;
+import std.getopt: getopt, GetoptResult, defaultGetoptPrinter;
 
 // Zippo module containing functions for working with *.zip files
 import zutil = zutility;
