@@ -1,52 +1,61 @@
 module zutility;
 
-// std.zip functionality that is used
 import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
 
-/* lists zip file contents
-    in:
-        const string filename => path to the *.zip including the zip file itself
-*/
-void listZipContents(const string filename = null) {
-    import std.stdio: writef, readln;
-    import std.file: exists, read;
+/++
+    Lists zip contents
+
+    Params:
+        name = archive file name
++/
+void listZipContents(in string name) {
+    import std.stdio: writefln, readln;
     import std.conv: to;
+    import std.file: exists, read;
+    import std.algorithm: endsWith;
 
     // check if file exists
-    if(!filename.exists) {
-        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
+    if(!name.exists) {
+        writefln("#zippo list: error! Zip file <%s> does not exist!", name);
         return;
     }
 
     // read zip file into memory
-    ZipArchive zip = new ZipArchive(read(filename));
+    ZipArchive zip = new ZipArchive(read(name));
     
-    // print the number of files in a zip file
-    // ask the user whether to print the contents of the zip or not
-    writef("\n<%s> contains %s files. Show them all? (y/n): ", filename, zip.directory.length);
+    // ask the user whether to print the contents of the zip file
+    char input = 'y';
+    if(zip.directory.length > 12) {
+        writefln("#zippo list: <%s> contains %s files.", name, zip.directory.length);
+        writefln("Show them all? (y/N): ");
+        input = readln()[0];
+    }
 
-    if((readln()[0]) == 'y') { 
+    if(input == 'y' || input == 'Y') { 
         // iterate over all zip members
-        writef("%10s\t%s\n", "Size", "Name");
+        writefln("%8s\t%s", "Size", "Name");
         foreach(file, data; zip.directory) {
+            // skip folders
+            if(file.endsWith("/")) {
+                continue;
+            }
+
             // print some info about each member
-            string fileSize = (
+            const fileSize = (
                 (data.expandedSize > 1_000_000_000) ? ((data.expandedSize.to!float / 1_000_000_000).to!string ~ " Gb") : (
                     (data.expandedSize > 1_000_000) ? ((data.expandedSize.to!float / 1_000_000).to!string ~ " Mb") : (
                         (data.expandedSize > 1_000) ? ((data.expandedSize.to!float / 1_000).to!string ~ " Kb") : (
-                            data.expandedSize.to!string ~ "  b"
+                            data.expandedSize.to!string ~ " b"
                         )
                     )
                 )
             );
             
-            writef("%10s\t%s\n", fileSize, file);
+            writefln("%10s\t%s", fileSize, file);
         }
     } else {
-        writef("%s\n", "# error: Canceled...");
+        writefln("#zippo list: cancelled...");
     }
-
-    writef("\n");
 }
 
 /* unzips the zip file (or the specified files only contained in a zip)
