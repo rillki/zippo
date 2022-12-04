@@ -9,10 +9,12 @@ import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
         name = archive file name
 +/
 void listZipContents(in string name) {
-    import std.stdio: writefln, readln;
+    import std.stdio: writefln, writef, readln;
     import std.conv: to;
     import std.file: exists, read;
-    import std.algorithm: endsWith;
+    import std.algorithm: endsWith, filter, count;
+
+    enum MAX_DISPLAY_ELEMENTS = 12;
 
     // check if file exists
     if(!name.exists) {
@@ -25,9 +27,10 @@ void listZipContents(in string name) {
     
     // ask the user whether to print the contents of the zip file
     char input = 'y';
-    if(zip.directory.length > 12) {
+    immutable elementsInZip = zip.directory.keys.filter!(a => !a.endsWith("/")).count();
+    if(elementsInZip > MAX_DISPLAY_ELEMENTS) {
         writefln("#zippo list: <%s> contains %s files.", name, zip.directory.length);
-        writefln("Show them all? (y/N): ");
+        writef("Show them all? (y/N): ");
         input = readln()[0];
     }
 
