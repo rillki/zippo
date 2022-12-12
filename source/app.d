@@ -75,7 +75,8 @@ void zippoZip(string[] args) {
         opt_path = getcwd,
         opt_include = null,
         opt_exclude = null;
-    bool opt_verbose = false;
+    bool 
+        opt_verbose = false;
 
     // parsing arguments
     GetoptResult argInfo;
@@ -117,19 +118,19 @@ void zippoUnzip(string[] args) {
 
     // define additional options
     string
-        opt_name = "myZippoArchive.zip",
-        opt_path = getcwd,
+        opt_filename = "myZippoArchive.zip";
+    string[]
         opt_include = null,
         opt_exclude = null;
-    bool opt_verbose = false;
+    bool 
+        opt_verbose = false;
 
     // parsing arguments
     GetoptResult argInfo;
     try {
         argInfo = getopt(
             args,
-            "name|n", "archive name (default: myZippoArchive.zip)", &opt_name,
-            "path|p", "output path (default: cwd)", &opt_path,
+            "filename|f", "archive name (default: myZippoArchive.zip)", &opt_filename,
             "include|i", "unarchive listed files only", &opt_include,
             "exclude|e", "exclude listed files (use either include or exclude)", &opt_exclude,
             "verbose|v", "verbose output", &opt_verbose
@@ -138,7 +139,7 @@ void zippoUnzip(string[] args) {
         // print help if needed
         if(argInfo.helpWanted) {
             defaultGetoptPrinter("zippo version v%s -- A simple command line ZIP utility.".format(ZIPPO_VERSION), argInfo.options);
-            writefln("\nEXAMPLE: zippo unzip --path=../temp --include=img1.png,img2.jpg --name=myZippoArchive.zip\n");
+            writefln("\nEXAMPLE: zippo unzip --include=img1.png,img2.jpg --filename=myZippoArchive.zip\n");
             return;
         }
     } catch(Exception e) {
@@ -147,6 +148,7 @@ void zippoUnzip(string[] args) {
     }
 
     // call decompress function here
+    util.decompress(opt_filename, opt_include, opt_exclude, opt_verbose);
 }
 
 /++

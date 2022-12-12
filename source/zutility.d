@@ -61,26 +61,33 @@ void listZipContents(in string name) {
     }
 }
 
-/* unzips the zip file (or the specified files only contained in a zip)
-    in:
-	   const string filename    => path to the *.zip including the zip file itself
-       const string[] files     => files to unzip, if none are specified, unzips all
-       const string[] fignore   => files to exclude from decompression
-       const bool verbose       => verbose output
-*/
-void decompress(const string filename = null, const string[] files = null, const string[] fignore = null, const bool verbose = false) {
-    import std.stdio: writef;
+/++
+    Extracts file contents
+
+    Params:
+        filename = path the ZIP file including the filename itself
+        finclude = unzip the specified files only
+        fexclude = unzip all files excluding the specified files only
+        verbose = verbose output
++/
+void decompress(in string filename, in string[] finclude = null, in string[] fexclude = null, in bool verbose = false) {
+    import std.stdio: writefln;
     import std.file: isDir, exists, read, write, mkdirRecurse;
     import std.path: dirSeparator;
-    import std.array: array;
+    import std.array: array, empty;
     import std.conv: to;
-    import std.algorithm.searching: canFind;
-    import std.algorithm.mutation: remove;
+    import std.algorithm: canFind, remove, filter, endsWith;
     import std.parallelism: parallel;
 
     // check if file exists
     if(!filename.exists) {
-        writef("\n%s%s%s\n\n", "# error: Zip file <", filename, "> does not exist!");
+        writefln("#zippo unzip: error! Zip file <%s> does not exist!", filename);
+        return;
+    }
+
+    // check if both finclude and fexclude are specified
+    if(!finclude.empty && !fexclude.empty) {
+        writefln("#zippo unzip: specify either what to extract or exclude, not both!");
         return;
     }
 
@@ -88,31 +95,62 @@ void decompress(const string filename = null, const string[] files = null, const
     ZipArchive zip = new ZipArchive(read(filename));
    
     // create the directory structure as in the zip file
-    foreach(file, data; zip.directory) {
-        if(file[$-1] == dirSeparator.to!char) {
-            mkdirRecurse(file);
+    foreach(path, data; zip.directory) {
+        if(path.endsWith("/")) {
+            mkdirRecurse(path);
         }
     }
 
-    // unzip all files
+    // extract selected files only
+    if(!finclude.empty) {
+        // foreach(pair; zip.directory.byKeyValue.parallel) {
+        //     // skip directories
+        //     if(pair.key.endsWith("/") || pair.key) { continue; }
+
+        //     // decompress the archive member
+        //     pair.key.write(zip.expand(pair.value));    
+    
+        //     // verbose output
+        //     if(verbose) {
+        //         writefln("# zippo unzip: %s decompressed!", pair.key);
+        //     }
+        // }
+    } else if(!fexclude.empty) { // exclude selected files
+        //
+    } else { // extract all
+        foreach(pair; zip.directory.byKeyValue.parallel) {
+            // skip directories
+            if(pair.key.endsWith("/")) { continue; }
+
+            // decompress the archive member
+            pair.key.write(zip.expand(pair.value));    
+    
+            // verbose output
+            if(verbose) {
+                writefln("# zippo unzip: %s decompressed!", pair.key);
+            }
+        }
+    }
+
+    /* // unzip all files
     if(files is null) {
         if(fignore is null) {
-	        foreach(pair; zip.directory.byKeyValue.parallel) {
-	            // skip empty directories
-	            if(pair.key[$-1] == dirSeparator.to!char) { continue; }
-	
-	            // decompress the archive member
-	            pair.key.write(zip.expand(pair.value));    
-	    
-	            // verbose output
-	            if(verbose) {
-                    writef("Decompressed: %s\n", pair.key);
-	            }
+            foreach(pair; zip.directory.byKeyValue.parallel) {
+                // skip empty directories
+                if(pair.key[$-1] == dirSeparator.to!char) { continue; }
+    
+                // decompress the archive member
+                pair.key.write(zip.expand(pair.value));    
+        
+                // verbose output
+                if(verbose) {
+                    writefln("Decompressed: %s\n", pair.key);
+                }
             }
             
             // verbose output
             if(verbose) {
-                writef("\nINFO: %s files decompressed.\n", zip.totalEntries);
+                writefln("\nINFO: %s files decompressed.\n", zip.totalEntries);
             }
         } else { // unzip all files except for files that should be ignored
             // remove files that sould be ignored
@@ -122,21 +160,21 @@ void decompress(const string filename = null, const string[] files = null, const
             }
 
             foreach(pair; ufiles.parallel) {
-	            // skip empty directories
+                // skip empty directories
                 if(pair.key[$-1] == dirSeparator.to!char) { continue; }
                     
                 // decompress the archive member
-    		    pair.key.write(zip.expand(pair.value));
-        	    
-    	        // verbose output
-    	        if(verbose) {
-    		        writef("Decompressed: %s\n", pair.key);
-        		}
+                pair.key.write(zip.expand(pair.value));
+                
+                // verbose output
+                if(verbose) {
+                    writefln("Decompressed: %s\n", pair.key);
+                }
             }
 
             // verbose output
             if(verbose) {
-                writef("\nINFO: %s files decompressed.\n", ufiles.length);
+                writefln("\nINFO: %s files decompressed.\n", ufiles.length);
             }
         }
     } else { // unzip specified files only
@@ -151,21 +189,21 @@ void decompress(const string filename = null, const string[] files = null, const
             if(pair.key[$-1] == dirSeparator.to!char) { continue; }
 
             // decompress the archive member
-    		pair.key.write(zip.expand(pair.value));
+            pair.key.write(zip.expand(pair.value));
             
             // verbose output
             if(verbose) {
-    		    writef("Unzipped: %s\n", pair.key);
-    		}
+                writefln("Unzipped: %s\n", pair.key);
+            }
         }
 
         // verbose output
         if(verbose) {
-            writef("\nINFO: %s files decompressed.\n", ufiles.length);
+            writefln("\nINFO: %s files decompressed.\n", ufiles.length);
         }
     }
     
-    writef("\n");
+    writefln("\n");*/
 }
 
 /* compresses files in a specified directory into a single zip file,
@@ -430,7 +468,7 @@ string[] multipleSplit(const string str = "", const string sep = "") {
     if(str.canFind(sep)) {
         auto temp = str.findSplit(sep);
         s ~= temp[0];
-	
+    
         s ~= temp[$-1].multipleSplit(sep);
     } else {
         s ~= str;
