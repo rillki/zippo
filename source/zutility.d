@@ -70,13 +70,13 @@ void listZipContents(in string name) {
         fexclude = unzip all files excluding the specified files only
         verbose = verbose output
 +/
-void decompress(in string filename, in string[] finclude = null, in string[] fexclude = null, in bool verbose = false) {
+void decompress(in string filename, string[] finclude = null, string[] fexclude = null, in bool verbose = false) {
     import std.stdio: writefln;
     import std.file: isDir, exists, read, write, mkdirRecurse;
     import std.path: dirSeparator;
     import std.array: array, empty;
     import std.conv: to;
-    import std.algorithm: canFind, remove, filter, endsWith;
+    import std.algorithm: canFind, endsWith, remove;
     import std.parallelism: parallel;
 
     // check if file exists
@@ -103,21 +103,49 @@ void decompress(in string filename, in string[] finclude = null, in string[] fex
 
     // extract selected files only
     if(!finclude.empty) {
+        writefln("INCLUDE");
+        foreach(pair; zip.directory.byKeyValue.parallel) {
+            // skip directories
+            if(pair.key.endsWith("/")) { continue; }
+
+            foreach(idx, el; finclude) {
+                if(pair.key.canFind(el)) {
+                    // decompress the archive member
+                    pair.key.write(zip.expand(pair.value));    
+            
+                    // verbose output
+                    if(verbose) {
+                        writefln("#zippo unzip: %s decompressed!", pair.key);
+                    }
+
+                    // remove the element we decompressed from finclude and break out the loop
+                    finclude = finclude.remove(idx);
+                    break;
+                }
+            }
+        }
+    } else if(!fexclude.empty) { // exclude selected files
+        // writefln("EXCLUDE");
         // foreach(pair; zip.directory.byKeyValue.parallel) {
         //     // skip directories
-        //     if(pair.key.endsWith("/") || pair.key) { continue; }
+        //     if(pair.key.endsWith("/")) { continue; }
 
-        //     // decompress the archive member
-        //     pair.key.write(zip.expand(pair.value));    
-    
-        //     // verbose output
-        //     if(verbose) {
-        //         writefln("# zippo unzip: %s decompressed!", pair.key);
+        //     foreach(idx, el; fexclude) {
+        //         if(pair.key.canFind(el)) {
+        //             break;
+        //         }
+
+        //         // decompress the archive member
+        //         pair.key.write(zip.expand(pair.value));    
+        
+        //         // verbose output
+        //         if(verbose) {
+        //             writefln("#zippo unzip: %s decompressed!", pair.key);
+        //         }
         //     }
         // }
-    } else if(!fexclude.empty) { // exclude selected files
-        //
     } else { // extract all
+        writefln("ALL");
         foreach(pair; zip.directory.byKeyValue.parallel) {
             // skip directories
             if(pair.key.endsWith("/")) { continue; }
@@ -127,7 +155,7 @@ void decompress(in string filename, in string[] finclude = null, in string[] fex
     
             // verbose output
             if(verbose) {
-                writefln("# zippo unzip: %s decompressed!", pair.key);
+                writefln("#zippo unzip: %s decompressed!", pair.key);
             }
         }
     }

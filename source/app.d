@@ -111,6 +111,8 @@ void zippoZip(string[] args) {
         args = command line arguments
 +/
 void zippoUnzip(string[] args) {
+    import std.array: split;
+
     if(args.length < 2) {
         writefln("#zippo zip: no commands provided! See \'zippo zip -h\' for more info.");
         return;
@@ -118,8 +120,7 @@ void zippoUnzip(string[] args) {
 
     // define additional options
     string
-        opt_filename = "myZippoArchive.zip";
-    string[]
+        opt_filename = "myZippoArchive.zip",
         opt_include = null,
         opt_exclude = null;
     bool 
@@ -148,7 +149,7 @@ void zippoUnzip(string[] args) {
     }
 
     // call decompress function here
-    util.decompress(opt_filename, opt_include, opt_exclude, opt_verbose);
+    util.decompress(opt_filename, opt_include.split(","), opt_exclude.split(","), opt_verbose);
 }
 
 /++
