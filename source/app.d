@@ -149,7 +149,9 @@ void zippoUnzip(string[] args) {
     }
 
     // call decompress function here
+    writefln("#zippo unzip: STARTING decompression...");
     util.decompress(opt_filename, opt_include.split(","), opt_exclude.split(","), opt_verbose);
+    writefln("#zippo unzip: FINISHED...");
 }
 
 /++

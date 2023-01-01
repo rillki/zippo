@@ -103,19 +103,18 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
 
     // extract selected files only
     if(!finclude.empty) {
-        writefln("INCLUDE");
         foreach(pair; zip.directory.byKeyValue.parallel) {
             // skip directories
             if(pair.key.endsWith("/")) { continue; }
 
             foreach(idx, el; finclude) {
-                if(pair.key.canFind(el)) {
+                if(pair.key.endsWith(el)) {
                     // decompress the archive member
                     pair.key.write(zip.expand(pair.value));    
             
                     // verbose output
                     if(verbose) {
-                        writefln("#zippo unzip: %s decompressed!", pair.key);
+                        writefln("#zippo unzip: <%s> decompressed!", pair.key);
                     }
 
                     // remove the element we decompressed from finclude and break out the loop
@@ -124,28 +123,34 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
                 }
             }
         }
-    } else if(!fexclude.empty) { // exclude selected files
-        // writefln("EXCLUDE");
-        // foreach(pair; zip.directory.byKeyValue.parallel) {
-        //     // skip directories
-        //     if(pair.key.endsWith("/")) { continue; }
+    } else if(!fexclude.empty) { // exclude selected files, extract everything else
+        foreach(pair; zip.directory.byKeyValue.parallel) {
+            // skip directories
+            if(pair.key.endsWith("/")) { continue; }
 
-        //     foreach(idx, el; fexclude) {
-        //         if(pair.key.canFind(el)) {
-        //             break;
-        //         }
+            // check if we should skip current entry
+            bool shouldSkip = false;
+            foreach(idx, el; fexclude) {
+                if(pair.key.endsWith(el)) {
+                    shouldSkip = true;
 
-        //         // decompress the archive member
-        //         pair.key.write(zip.expand(pair.value));    
+                    // remove the element we need to skip from the exclude list
+                    fexclude = fexclude.remove(idx);
+                    break;
+                }
+            }
+
+            if(!shouldSkip) {
+                // decompress the archive member
+                pair.key.write(zip.expand(pair.value));    
         
-        //         // verbose output
-        //         if(verbose) {
-        //             writefln("#zippo unzip: %s decompressed!", pair.key);
-        //         }
-        //     }
-        // }
+                // verbose output
+                if(verbose) {
+                    writefln("#zippo unzip: <%s> decompressed!", pair.key);
+                }
+            }
+        }
     } else { // extract all
-        writefln("ALL");
         foreach(pair; zip.directory.byKeyValue.parallel) {
             // skip directories
             if(pair.key.endsWith("/")) { continue; }
@@ -155,83 +160,10 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
     
             // verbose output
             if(verbose) {
-                writefln("#zippo unzip: %s decompressed!", pair.key);
+                writefln("#zippo unzip: <%s> decompressed!", pair.key);
             }
         }
     }
-
-    /* // unzip all files
-    if(files is null) {
-        if(fignore is null) {
-            foreach(pair; zip.directory.byKeyValue.parallel) {
-                // skip empty directories
-                if(pair.key[$-1] == dirSeparator.to!char) { continue; }
-    
-                // decompress the archive member
-                pair.key.write(zip.expand(pair.value));    
-        
-                // verbose output
-                if(verbose) {
-                    writefln("Decompressed: %s\n", pair.key);
-                }
-            }
-            
-            // verbose output
-            if(verbose) {
-                writefln("\nINFO: %s files decompressed.\n", zip.totalEntries);
-            }
-        } else { // unzip all files except for files that should be ignored
-            // remove files that sould be ignored
-            auto ufiles = zip.directory.byKeyValue.array;
-            foreach(fi; fignore) {
-                ufiles = ufiles.remove!(a => a.key.canFind(fi));
-            }
-
-            foreach(pair; ufiles.parallel) {
-                // skip empty directories
-                if(pair.key[$-1] == dirSeparator.to!char) { continue; }
-                    
-                // decompress the archive member
-                pair.key.write(zip.expand(pair.value));
-                
-                // verbose output
-                if(verbose) {
-                    writefln("Decompressed: %s\n", pair.key);
-                }
-            }
-
-            // verbose output
-            if(verbose) {
-                writefln("\nINFO: %s files decompressed.\n", ufiles.length);
-            }
-        }
-    } else { // unzip specified files only
-        // remove all files that we do not need
-        auto ufiles = zip.directory.byKeyValue.array;
-        foreach(file; files.parallel) {
-            ufiles = ufiles.remove!(a => !a.key.canFind(file));
-        }
-
-        foreach(pair; ufiles.parallel) {
-            // skip empty directories
-            if(pair.key[$-1] == dirSeparator.to!char) { continue; }
-
-            // decompress the archive member
-            pair.key.write(zip.expand(pair.value));
-            
-            // verbose output
-            if(verbose) {
-                writefln("Unzipped: %s\n", pair.key);
-            }
-        }
-
-        // verbose output
-        if(verbose) {
-            writefln("\nINFO: %s files decompressed.\n", ufiles.length);
-        }
-    }
-    
-    writefln("\n");*/
 }
 
 /* compresses files in a specified directory into a single zip file,
