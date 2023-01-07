@@ -1,58 +1,40 @@
 # Zippo
+Zip, unzip and list archive contents in just a few seconds using your terminal. No need to click or select anything! 
 
-### Command line ZIP utility
+### Usage
+```
+zippo version 0.2.0 -- A simple command line ZIP utility.
+z     zip [OPTIONS]  use -h to read more on creating a zip archive
+u   unzip [OPTIONS]  use -h to read on how to extract an archive file
+l    list            lists zip archive contents
+v version            display current version
+h    help            This help information.
 
-!!! Refactoring/work in progress...
-
-Zip and unzip files in just a few seconds using your terminal or the command line. No need to click or select anything! 
-
-## Building the Zippo Utility:
-Check if you have `dmd`, `gdc` or `ldc` compiler installed on your system, and `make` (optional). Then: 
-```
-git clone https://github.com/rillki/zippo
-``` 
-```
-cd zippo
-```
-Finally, type: 
-```
-make
+EXAMPLE: zippo zip -p=assets/hello
 ```
 
-Or you can type out the entire command:
-```D
-dmd -of=zippo source/main.d source/zinterface.d source/zutility.d
+### Building and Installing
+#### Required
+* [D compiler](https://dlang.org/download) (DMD is recommended)
+* [DUB](https://dub.pm) package manager
+
+#### Compiling
+1. Clone the repository to your machine:
+```
+git clone https://github.com/rillki/img2pdf.git
+```
+2. Open your terminal or command line and go to `img2pdf` folder:
+```
+cd img2pdf
+```
+3. Build the binary
+```
+dub --build=release
 ```
 
-Replace `dmd` with the D compiler you have installed on your system. It will produce an executable called `zippo`, add it to your `PATH` on your system.
+Your will find the binary in the `bin/` folder. Add it to your `PATH` to use it freely.
 
-## Usage:
-
-Compressing a file:
-```D
-zippo zip --name=myzipfile.zip --path=/Desktop/media/mymovie.mp4
-```
-`--name` is optional, it will automatically pick up the name.
-
-Decompressing a file:
-```D
-zippo unzip myzipfile.zip
-```
-
-Listing file contents:
-```D
-zippo list myzipfile.zip
-```
-
-When a value for the command is not specified, the default value is used. For example, if `path` is not provided, then the current working directory is used.
-
-To check out the full list of available commands:
-```D
-zippo help
-```
-
-## The Zippo Wiki page
-Read more on the [wiki](https://github.com/rillk500/zippo/wiki) page.
-
+### LICENSE
+All code is licensed under the MIT license.
 
 

@@ -10,7 +10,7 @@ import std.getopt: getopt, GetoptResult, defaultGetoptPrinter;
 import util = zutility;
 
 /// version
-enum ZIPPO_VERSION = "0.1.0";
+enum ZIPPO_VERSION = "0.2.0";
 
 void main(string[] args) {    
     if(args.length < 2) {
@@ -50,7 +50,7 @@ void main(string[] args) {
             writefln("l    list            lists zip archive contents");
             writefln("v version            display current version");
             writefln("h    help            This help information.\n");
-            writefln("EXAMPLE: zippo zip ");
+            writefln("EXAMPLE: zippo zip -p=assets/hello");
             break;
         default:
             writefln("#zippo: Unrecognized option %s!", option);
