@@ -1,5 +1,6 @@
 module zutility;
 
+import std.stdio: writefln;
 import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
 
 /++
@@ -9,7 +10,7 @@ import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
         name = archive file name
 +/
 void listZipContents(in string name) {
-    import std.stdio: writefln, writef, readln;
+    import std.stdio: writef, readln;
     import std.conv: to;
     import std.file: exists, read;
     import std.algorithm: endsWith, filter, count;
@@ -71,7 +72,6 @@ void listZipContents(in string name) {
         verbose = verbose output
 +/
 void decompress(in string filename, string[] finclude = null, string[] fexclude = null, in bool verbose = false) {
-    import std.stdio: writefln;
     import std.file: isDir, exists, read, write, mkdirRecurse;
     import std.path: dirSeparator;
     import std.array: array, empty;
@@ -166,6 +166,83 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
     }
 }
 
+/++
+    Compresses specified files
+
+    Params:
+        filename = path the ZIP file including the filename itself
+        finclude = unzip the specified files only
+        fexclude = unzip all files excluding the specified files only
+        verbose = verbose output
++/
+void compress(in string filename, in string pathToFiles, string[] finclude = null, string[] fexclude = null, in bool verbose = false) {
+    import std.path: buildPath;
+    import std.file: write, exists, getcwd, isDir;
+    import std.array: empty;
+    import std.parallelism: parallel;
+    // import std.algorithm.mutation: remove;
+    // import std.algorithm.searching: canFind;
+
+    // check if pathToFiles exists
+    if(!pathToFiles.exists) {
+        writefln("#zippo zip: error! Files path <%s> does not exist!", pathToFiles);
+        return;
+    }
+
+    // check if both finclude and fexclude are specified
+    if(!finclude.empty && !fexclude.empty) {
+        writefln("#zippo zip: specify either what to archive or exclude, not both!");
+        return;
+    }
+
+    // create a new zip archive
+    ZipArchive zip = new ZipArchive(); 
+    zip.isZip64(true);
+
+    // quickly add member to archive
+    void zipAddArchiveMember(ref ZipArchive zip, in string file) {
+        ArchiveMember member = new ArchiveMember();
+        member.name = file;
+        member.expandedData(readFileData(file));
+        member.compressionMethod = CompressionMethod.deflate;
+        zip.addMember(member);
+    }
+
+    // get all files in path
+    auto filesInPath = pathToFiles.listdir();
+    if(!finclude.empty) {  // compress selected files only
+        // 
+    } else if(!fexclude.empty) { // exclude selected files, compress everything else
+        // 
+    } else { // compress all
+        foreach(file; filesInPath.parallel) {
+            // skip directories
+            if(file.isDir()) { continue; }
+
+            // create archive member and compress file contents
+            zipAddArchiveMember(zip, file);
+
+            // verbose output
+            if(verbose) {
+                writefln("#zippo zip: <%s> compressed!", file);
+            }
+        }
+    }
+
+    // save zip file
+    if(zip.totalEntries > 0) {
+        write(getcwd.buildPath(filename), zip.build());
+    } else {
+        writefln("#zippo zip: nothing to archive!");
+        return;
+    }
+
+    // verbose output
+    if(verbose) {
+        writefln("#zippo zip: %s files compressed.", zip.totalEntries);
+    }
+}
+
 /* compresses files in a specified directory into a single zip file,
     if the directory is not specified, uses the current working directory
     in:
@@ -175,7 +252,7 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
         const string[] fignore  => files exclude from compression
         const bool verbose      => verbose output
 */
-void compress(string filename = null, string path = null, const string[] files = null, const string[] fignore = null, const bool verbose = false) {
+void __compress(string filename = null, string path = null, const string[] files = null, const string[] fignore = null, const bool verbose = false) {
     import std.stdio: writef;
     import std.file: write, exists, getcwd, isDir;
     import std.path: dirSeparator;

@@ -2,6 +2,7 @@ module main;
 
 import std.stdio: writefln;
 import std.file: getcwd;
+import std.array: split;
 import std.string: format;
 import std.algorithm: remove;
 import std.getopt: getopt, GetoptResult, defaultGetoptPrinter;
@@ -71,8 +72,8 @@ void zippoZip(string[] args) {
 
     // define additional options
     string
-        opt_name = "myZippoArchive.zip",
-        opt_path = getcwd,
+        opt_filename = "myZippoArchive.zip",
+        opt_pathToFiles = getcwd,
         opt_include = null,
         opt_exclude = null;
     bool 
@@ -83,8 +84,8 @@ void zippoZip(string[] args) {
     try {
         argInfo = getopt(
             args,
-            "name|n", "archive name (default: myZippoArchive.zip)", &opt_name,
-            "path|p", "path to files (default: cwd)", &opt_path,
+            "name|n", "archive name (default: myZippoArchive.zip)", &opt_filename,
+            "path|p", "path to files (default: cwd)", &opt_pathToFiles,
             "include|i", "archive listed files only", &opt_include,
             "exclude|e", "exclude listed files (use either include or exclude)", &opt_exclude,
             "verbose|v", "verbose output", &opt_verbose
@@ -102,6 +103,9 @@ void zippoZip(string[] args) {
     }
 
     // call compress function here
+    writefln("#zippo zip: STARTING compression...");
+    util.compress(opt_filename, opt_pathToFiles,opt_include.split(","), opt_exclude.split(","), opt_verbose);
+    writefln("#zippo zip: FINISHED...");
 }
 
 /++
@@ -111,8 +115,6 @@ void zippoZip(string[] args) {
         args = command line arguments
 +/
 void zippoUnzip(string[] args) {
-    import std.array: split;
-
     if(args.length < 2) {
         writefln("#zippo zip: no commands provided! See \'zippo zip -h\' for more info.");
         return;
