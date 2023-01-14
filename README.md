@@ -1,5 +1,5 @@
 # Zippo
-Zip, unzip and list archive contents in just a few seconds using your terminal. No need to click or select anything! 
+Zip, unzip and list archive contents in just a few seconds using your terminal. No need to click or select anything! [Download](https://github.com/rillki/zippo/releases) the precompiled binary or build it yourself down below.
 
 ### Usage
 ```
@@ -21,11 +21,11 @@ EXAMPLE: zippo zip -p=assets/hello
 #### Compiling
 1. Clone the repository to your machine:
 ```
-git clone https://github.com/rillki/img2pdf.git
+git clone https://github.com/rillki/zippo.git
 ```
-2. Open your terminal or command line and go to `img2pdf` folder:
+2. Open your terminal or command line and go to `zippo` folder:
 ```
-cd img2pdf
+cd zippo
 ```
 3. Build the binary
 ```
