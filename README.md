@@ -1,6 +1,8 @@
 # Zippo
 Zip, unzip and list archive contents in just a few seconds using your terminal. No need to click or select anything! [Download](https://github.com/rillki/zippo/releases) the precompiled binary or build it yourself down below.
 
+<img src="assets/screenshot.jpg" width="720">
+
 ### Usage
 ```
 zippo version 0.2.0 -- A simple command line ZIP utility.
