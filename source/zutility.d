@@ -19,7 +19,7 @@ void listZipContents(in string name) {
 
     // check if file exists
     if(!name.exists) {
-        writefln("#zippo list: error! Zip file <%s> does not exist!", name);
+        writefln("#zippo list: error! Zip archive <%s> does not exist!", name);
         return;
     }
 
@@ -82,7 +82,7 @@ void decompress(in string filename, string[] finclude = null, string[] fexclude 
 
     // check if file exists
     if(!filename.exists) {
-        writefln("#zippo unzip: error! Zip file <%s> does not exist!", filename);
+        writefln("#zippo unzip: error! Zip archive <%s> does not exist! Did you forget to specify \'-f\' flag?", filename);
         return;
     }
 
@@ -321,6 +321,11 @@ string[] listdir(const string path = null) {
     import std.path: baseName;
     import std.file: dirEntries, SpanMode, getcwd, isFile;
     import std.algorithm: map;
+
+    // if it's a file return it as an array member, otherwise list directory entries
+    if(path.isFile) {
+        return [path];
+    }
 
     return dirEntries(((path is null) ? (getcwd) : (path)), SpanMode.breadth)
         .map!(a => a.name)

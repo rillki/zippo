@@ -116,7 +116,7 @@ void zippoZip(string[] args) {
 +/
 void zippoUnzip(string[] args) {
     if(args.length < 2) {
-        writefln("#zippo zip: no commands provided! See \'zippo zip -h\' for more info.");
+        writefln("#zippo zip: no commands provided! See \'zippo unzip -h\' for more info.");
         return;
     }
 
