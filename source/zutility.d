@@ -11,6 +11,7 @@ import std.zip: ZipArchive, ArchiveMember, CompressionMethod;
 void listZipContents(in string name) {
     import std.stdio: writef, writefln, readln;
     import std.conv: to;
+    import std.format: format;
     import std.file: exists, read;
     import std.algorithm: endsWith, filter, count;
 
@@ -44,11 +45,11 @@ void listZipContents(in string name) {
             }
 
             // print some info about each member
-            const fileSize = (
-                (data.expandedSize > 1_000_000_000) ? ((data.expandedSize.to!float / 1_000_000_000).to!string ~ " Gb") : (
-                    (data.expandedSize > 1_000_000) ? ((data.expandedSize.to!float / 1_000_000).to!string ~ " Mb") : (
-                        (data.expandedSize > 1_000) ? ((data.expandedSize.to!float / 1_000).to!string ~ " Kb") : (
-                            data.expandedSize.to!string ~ " b"
+            immutable fileSize = (
+                (data.expandedSize > 1_000_000_000) ? ("%.1f %2s".format((data.expandedSize.to!float / 1_000_000_000), "Gb")) : (
+                    (data.expandedSize > 1_000_000) ? ("%.1f %2s".format((data.expandedSize.to!float / 1_000_000), "Mb")) : (
+                        (data.expandedSize > 1_000) ? ("%.1f %2s".format((data.expandedSize.to!float / 1_000), "Kb")) : (
+                            "%.1f %2s".format(data.expandedSize, "b")
                         )
                     )
                 )
@@ -215,9 +216,13 @@ void compress(in string filename, in string pathToFiles, string[] finclude = nul
 
     // quickly add member to archive
     void zipAddArchiveMember(ref ZipArchive zip, in string file) {
+        import std.conv: to;
+        import std.file: read;
+        import std.string: representation;
+
         ArchiveMember member = new ArchiveMember();
         member.name = file;
-        member.expandedData(readFileData(file));
+        member.expandedData(cast(ubyte[])(file.read()));
         member.compressionMethod = CompressionMethod.deflate;
         zip.addMember(member);
     }
@@ -300,39 +305,6 @@ void compress(in string filename, in string pathToFiles, string[] finclude = nul
     if(verbose) {
         writefln("#zippo zip: %s files compressed.", zip.totalEntries);
     }
-}
-
-/++
-    Reads from a file and returns the data as ubyte[]
-
-    Params:
-        filename = path to file
-
-    Returns:
-        ubyte[] raw data
-+/
-ubyte[] readFileData(const string filename) {
-    import std.stdio: writef, File;
-    import std.file: exists;
-    import std.conv: to;
-    
-    // check if file exists
-    if(!filename.exists) {
-        writef("%s%s%s\n", "# error: File <", filename, "> does not exist!");
-        return [];
-    }
-    
-    // open the file
-    File file = File(filename, "r"); 
-    scope(exit) { file.close(); }
-    
-    // read file data
-    ubyte[] data;
-    while(!file.eof) {
-        data ~= file.readln;
-    }
-
-    return data;
 }
 
 /++

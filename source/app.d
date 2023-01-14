@@ -122,7 +122,7 @@ void zippoUnzip(string[] args) {
 
     // define additional options
     string
-        opt_filename = "myZippoArchive.zip",
+        opt_filename = null,
         opt_include = null,
         opt_exclude = null;
     bool 
@@ -133,7 +133,7 @@ void zippoUnzip(string[] args) {
     try {
         argInfo = getopt(
             args,
-            "filename|f", "archive name (default: myZippoArchive.zip)", &opt_filename,
+            "filename|f", "archive name", &opt_filename,
             "include|i", "unarchive listed files only", &opt_include,
             "exclude|e", "exclude listed files (use either include or exclude)", &opt_exclude,
             "verbose|v", "verbose output", &opt_verbose
